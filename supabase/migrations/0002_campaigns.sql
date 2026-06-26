@@ -136,21 +136,21 @@ create policy "campaigns_insert" on public.campaigns for insert
 
 drop policy if exists "campaigns_update" on public.campaigns;
 create policy "campaigns_update" on public.campaigns for update
-  using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+  using (public.is_campaign_master(id)) with check (public.is_campaign_master(id));
 
 drop policy if exists "campaigns_delete" on public.campaigns;
 create policy "campaigns_delete" on public.campaigns for delete
-  using (owner_id = auth.uid());
+  using (public.is_campaign_master(id));
 
--- campaign_members: qualquer membro vê os membros da campanha; jogador entra a si
--- mesmo (PLAYER); jogador sai (deleta a própria) e mestre remove jogadores.
+-- campaign_members: qualquer membro vê os membros da campanha; jogador entra apenas
+-- via RPC join_campaign(p_invite_code), que valida convite e campanha aberta.
+-- Jogador sai (deleta a própria membership) e mestre remove jogadores.
 drop policy if exists "campaign_members_select" on public.campaign_members;
 create policy "campaign_members_select" on public.campaign_members for select
   using (public.is_campaign_member(campaign_id));
 
 drop policy if exists "campaign_members_insert_self" on public.campaign_members;
-create policy "campaign_members_insert_self" on public.campaign_members for insert
-  with check (user_id = auth.uid() and role = 'PLAYER');
+-- Nao recriar INSERT policy aqui: entrada de PLAYER passa somente por join_campaign().
 
 drop policy if exists "campaign_members_delete" on public.campaign_members;
 create policy "campaign_members_delete" on public.campaign_members for delete

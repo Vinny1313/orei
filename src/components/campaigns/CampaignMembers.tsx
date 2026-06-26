@@ -7,6 +7,7 @@ type CampaignMembersProps = {
   members: CampaignMember[]
   isMaster: boolean
   currentUserId?: string
+  disabled?: boolean
   onRemove: (member: CampaignMember) => void
 }
 
@@ -17,6 +18,7 @@ export function CampaignMembers({
   members,
   isMaster,
   currentUserId,
+  disabled = false,
   onRemove,
 }: CampaignMembersProps) {
   if (members.length === 0) {
@@ -44,6 +46,7 @@ export function CampaignMembers({
                 type="button"
                 className="icon-button small danger"
                 title="Remover jogador"
+                disabled={disabled}
                 onClick={() => onRemove(member)}
               >
                 <UserMinus size={15} aria-hidden />

@@ -1,5 +1,4 @@
-// Detalhe da campanha (/campanhas/:id): dados, jogadores, personagens vinculados,
-// convite (só mestre), vincular personagem próprio, sair, e controles do mestre.
+// Detalhe da campanha (/campanhas/:id): dados, membros, personagens e acoes.
 
 import { ArrowLeft, Copy, DoorOpen, Pencil, ScrollText, Trash2, Users } from 'lucide-react'
 import { useState } from 'react'
@@ -8,10 +7,12 @@ import { CampaignCharacters } from '../components/campaigns/CampaignCharacters'
 import { CampaignForm } from '../components/campaigns/CampaignForm'
 import type { CampaignFormValues } from '../components/campaigns/CampaignForm'
 import { CampaignMembers } from '../components/campaigns/CampaignMembers'
+import { CampaignsUnavailable } from '../components/campaigns/CampaignsUnavailable'
 import { useAuth } from '../hooks/useAuth'
 import { useCampaign } from '../hooks/useCampaigns'
 import { useCharacters } from '../hooks/useCharacters'
 import {
+  campaignsEnabled,
   deleteCampaign,
   leaveCampaign,
   linkCharacter,
@@ -28,11 +29,23 @@ const STATUS_LABEL: Record<CampaignStatus, string> = {
 }
 
 export function CampaignDetailPage() {
+  if (!campaignsEnabled) {
+    return <CampaignsUnavailable showBackLink />
+  }
+
+  return <CampaignDetailPageContent />
+}
+
+function CampaignDetailPageContent() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { campaign, members, characters, loading, error, reload } = useCampaign(id)
-  const { characters: myCharacters } = useCharacters()
+  const {
+    characters: myCharacters,
+    loading: loadingMyCharacters,
+    error: myCharactersError,
+  } = useCharacters()
 
   const [editing, setEditing] = useState(false)
   const [editValues, setEditValues] = useState<CampaignFormValues>({ name: '', description: '' })
@@ -40,11 +53,12 @@ export function CampaignDetailPage() {
   const [savingEdit, setSavingEdit] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
+  const [actionBusy, setActionBusy] = useState(false)
 
   if (loading) {
     return (
       <main className="page">
-        <div className="empty-state large">Carregando a campanha…</div>
+        <div className="empty-state large">Carregando a campanha...</div>
       </main>
     )
   }
@@ -53,10 +67,10 @@ export function CampaignDetailPage() {
     return (
       <main className="page">
         <div className="empty-state large">
-          <p>{error ?? 'Campanha não encontrada.'}</p>
+          <p>{error ?? 'Campanha nao encontrada.'}</p>
           <Link to="/campanhas" className="roll-button">
             <ArrowLeft size={18} aria-hidden />
-            Voltar às campanhas
+            Voltar as campanhas
           </Link>
         </div>
       </main>
@@ -69,6 +83,8 @@ export function CampaignDetailPage() {
   const linkableCharacters = myCharacters.filter((character) => !linkedIds.has(character.id))
 
   const runAction = async (fn: () => Promise<unknown>, after?: () => void) => {
+    if (actionBusy) return
+    setActionBusy(true)
     setActionError(null)
     try {
       await fn()
@@ -78,7 +94,9 @@ export function CampaignDetailPage() {
         await reload()
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'A ação falhou.')
+      setActionError(err instanceof Error ? err.message : 'A acao falhou.')
+    } finally {
+      setActionBusy(false)
     }
   }
 
@@ -90,7 +108,7 @@ export function CampaignDetailPage() {
 
   const saveEdit = async () => {
     if (!editValues.name.trim()) {
-      setEditError('O nome é obrigatório.')
+      setEditError('O nome e obrigatorio.')
       return
     }
     setSavingEdit(true)
@@ -103,7 +121,7 @@ export function CampaignDetailPage() {
       setEditing(false)
       await reload()
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : 'Não foi possível salvar.')
+      setEditError(err instanceof Error ? err.message : 'Nao foi possivel salvar.')
     } finally {
       setSavingEdit(false)
     }
@@ -144,13 +162,13 @@ export function CampaignDetailPage() {
   }
 
   const handleClose = () => {
-    if (window.confirm('Encerrar a campanha? Ela ficará marcada como encerrada.')) {
+    if (window.confirm('Encerrar a campanha? Ela ficara marcada como encerrada.')) {
       void runAction(() => updateCampaign(campaign.id, { status: 'encerrada' }))
     }
   }
 
   const handleDelete = () => {
-    if (window.confirm('Excluir a campanha permanentemente? Esta ação não pode ser desfeita.')) {
+    if (window.confirm('Excluir a campanha permanentemente? Esta acao nao pode ser desfeita.')) {
       void runAction(() => deleteCampaign(campaign.id), () => navigate('/campanhas'))
     }
   }
@@ -161,7 +179,7 @@ export function CampaignDetailPage() {
         <div>
           <Link to="/campanhas" className="back-link">
             <ArrowLeft size={16} aria-hidden />
-            Voltar às campanhas
+            Voltar as campanhas
           </Link>
           <h1>{campaign.name}</h1>
         </div>
@@ -175,7 +193,7 @@ export function CampaignDetailPage() {
           values={editValues}
           error={editError}
           submitting={savingEdit}
-          submitLabel="Salvar alterações"
+          submitLabel="Salvar alteracoes"
           onChange={(key, value) => setEditValues((current) => ({ ...current, [key]: value }))}
           onSubmit={() => void saveEdit()}
           onCancel={() => setEditing(false)}
@@ -185,14 +203,14 @@ export function CampaignDetailPage() {
           {campaign.description ? (
             <p>{campaign.description}</p>
           ) : (
-            <p className="muted-note">Sem descrição.</p>
+            <p className="muted-note">Sem descricao.</p>
           )}
 
           {isMaster && (
             <div className="invite-box">
-              <span>Código de convite</span>
+              <span>Codigo de convite</span>
               <code>{campaign.inviteCode}</code>
-              <button type="button" className="icon-button small" title="Copiar código" onClick={handleCopyCode}>
+              <button type="button" className="icon-button small" title="Copiar codigo" onClick={handleCopyCode}>
                 <Copy size={15} aria-hidden />
               </button>
             </div>
@@ -201,22 +219,22 @@ export function CampaignDetailPage() {
           <div className="form-actions">
             {isMaster ? (
               <>
-                <button type="button" className="ghost-button" onClick={startEdit}>
+                <button type="button" className="ghost-button" onClick={startEdit} disabled={actionBusy}>
                   <Pencil size={15} aria-hidden />
                   Editar
                 </button>
                 {!closed && (
-                  <button type="button" className="ghost-button" onClick={handleClose}>
+                  <button type="button" className="ghost-button" onClick={handleClose} disabled={actionBusy}>
                     Encerrar
                   </button>
                 )}
-                <button type="button" className="ghost-button danger" onClick={handleDelete}>
+                <button type="button" className="ghost-button danger" onClick={handleDelete} disabled={actionBusy}>
                   <Trash2 size={15} aria-hidden />
                   Excluir
                 </button>
               </>
             ) : (
-              <button type="button" className="ghost-button danger" onClick={handleLeave}>
+              <button type="button" className="ghost-button danger" onClick={handleLeave} disabled={actionBusy}>
                 <DoorOpen size={15} aria-hidden />
                 Sair da campanha
               </button>
@@ -234,6 +252,7 @@ export function CampaignDetailPage() {
           members={members}
           isMaster={isMaster}
           currentUserId={user?.id}
+          disabled={actionBusy}
           onRemove={handleRemoveMember}
         />
       </section>
@@ -247,13 +266,24 @@ export function CampaignDetailPage() {
           characters={characters}
           isMaster={isMaster}
           currentUserId={user?.id}
+          disabled={actionBusy}
           onUnlink={handleUnlink}
         />
         {!closed && (
           <div className="link-character">
             <span className="select-wrap">
-              <select value={selectedCharacter} onChange={(event) => setSelectedCharacter(event.target.value)}>
-                <option value="">Vincular meu personagem…</option>
+              <select
+                value={selectedCharacter}
+                onChange={(event) => setSelectedCharacter(event.target.value)}
+                disabled={loadingMyCharacters || !!myCharactersError || actionBusy}
+              >
+                <option value="">
+                  {loadingMyCharacters
+                    ? 'Carregando personagens...'
+                    : myCharactersError
+                      ? 'Nao foi possivel carregar personagens'
+                      : 'Vincular meu personagem...'}
+                </option>
                 {linkableCharacters.map((character) => (
                   <option key={character.id} value={character.id}>
                     {character.sheet.identity.characterName.trim() || 'Personagem sem nome'}
@@ -261,7 +291,12 @@ export function CampaignDetailPage() {
                 ))}
               </select>
             </span>
-            <button type="button" className="ghost-button" onClick={handleLink} disabled={!selectedCharacter}>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={handleLink}
+              disabled={!selectedCharacter || loadingMyCharacters || !!myCharactersError || actionBusy}
+            >
               Vincular
             </button>
           </div>

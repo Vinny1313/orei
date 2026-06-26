@@ -26,6 +26,10 @@ const requireClient = (): SupabaseClient => {
   return supabase
 }
 
+const assertDeleted = (count: number | null, message: string) => {
+  if (!count) throw new Error(message)
+}
+
 const currentUserId = async (client: SupabaseClient): Promise<string> => {
   const { data } = await client.auth.getSession()
   const id = data.session?.user.id
@@ -128,8 +132,12 @@ export const updateCampaign = async (
 
 export const deleteCampaign = async (id: string): Promise<void> => {
   const client = requireClient()
-  const { error } = await client.from('campaigns').delete().eq('id', id)
+  const { count, error } = await client
+    .from('campaigns')
+    .delete({ count: 'exact' })
+    .eq('id', id)
   if (error) throw new Error(error.message)
+  assertDeleted(count, 'Campanha nao encontrada ou sem permissao para excluir.')
 }
 
 /** Entra numa campanha pelo código de convite (RPC SECURITY DEFINER). Retorna o id. */
@@ -146,24 +154,26 @@ export const joinByCode = async (code: string): Promise<string> => {
 export const leaveCampaign = async (campaignId: string): Promise<void> => {
   const client = requireClient()
   const me = await currentUserId(client)
-  const { error } = await client
+  const { count, error } = await client
     .from('campaign_members')
-    .delete()
+    .delete({ count: 'exact' })
     .eq('campaign_id', campaignId)
     .eq('user_id', me)
   if (error) throw new Error(error.message)
+  assertDeleted(count, 'Voce nao pode sair desta campanha.')
 }
 
 /** Mestre remove um jogador (a RLS impede remover outro mestre). */
 export const removeMember = async (campaignId: string, userId: string): Promise<void> => {
   const client = requireClient()
-  const { error } = await client
+  const { count, error } = await client
     .from('campaign_members')
-    .delete()
+    .delete({ count: 'exact' })
     .eq('campaign_id', campaignId)
     .eq('user_id', userId)
     .eq('role', 'PLAYER')
   if (error) throw new Error(error.message)
+  assertDeleted(count, 'Jogador nao encontrado ou sem permissao para remover.')
 }
 
 type MemberRow = {
@@ -246,9 +256,10 @@ export const linkCharacter = async (
 
 export const unlinkCharacter = async (campaignCharacterId: string): Promise<void> => {
   const client = requireClient()
-  const { error } = await client
+  const { count, error } = await client
     .from('campaign_characters')
-    .delete()
+    .delete({ count: 'exact' })
     .eq('id', campaignCharacterId)
   if (error) throw new Error(error.message)
+  assertDeleted(count, 'Personagem nao encontrado ou sem permissao para desvincular.')
 }

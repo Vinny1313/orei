@@ -7,6 +7,7 @@ type CampaignCharactersProps = {
   characters: CampaignCharacter[]
   isMaster: boolean
   currentUserId?: string
+  disabled?: boolean
   onUnlink: (link: CampaignCharacter) => void
 }
 
@@ -14,6 +15,7 @@ export function CampaignCharacters({
   characters,
   isMaster,
   currentUserId,
+  disabled = false,
   onUnlink,
 }: CampaignCharactersProps) {
   if (characters.length === 0) {
@@ -36,6 +38,7 @@ export function CampaignCharacters({
                 type="button"
                 className="icon-button small danger"
                 title="Desvincular personagem"
+                disabled={disabled}
                 onClick={() => onUnlink(link)}
               >
                 <Unlink size={15} aria-hidden />

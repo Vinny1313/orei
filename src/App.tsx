@@ -22,6 +22,7 @@ import {
   Italic,
   Underline,
   Image as ImageIcon,
+  X,
 } from 'lucide-react'
 import type { ChangeEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -85,6 +86,7 @@ type CharacterSheet = {
 }
 
 type RollResult = {
+  id: string
   label: string
   d20: number
   bonus: number
@@ -199,7 +201,9 @@ function App() {
     }
   })
   
-  const [roll, setRoll] = useState<RollResult | null>(null)
+  const [rollHistory, setRollHistory] = useState<RollResult[]>([])
+  const [popupRoll, setPopupRoll] = useState<RollResult | null>(null)
+  const popupTimeoutRef = useRef<number | null>(null)
   const [savedAt, setSavedAt] = useState('agora')
 
   useEffect(() => {
@@ -257,7 +261,17 @@ function App() {
 
   const rollDice = (label: string, bonus = 0) => {
     const d20 = Math.floor(Math.random() * 20) + 1
-    setRoll({ label, d20, bonus, total: d20 + bonus })
+    const newRoll: RollResult = { id: crypto.randomUUID(), label, d20, bonus, total: d20 + bonus }
+    
+    // Adiciona ao histórico (limitando a 10)
+    setRollHistory(prev => [newRoll, ...prev].slice(0, 10))
+    
+    // Ativa o Pop-up
+    setPopupRoll(newRoll)
+    if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current)
+    popupTimeoutRef.current = window.setTimeout(() => {
+      setPopupRoll(null)
+    }, 25000)
   }
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -297,206 +311,225 @@ function App() {
   const resetSheet = () => {
     if (window.confirm('Resetar a ficha atual?')) {
       setSheet(createDefaultSheet())
-      setRoll(null)
+      setRollHistory([])
     }
   }
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Ficha digital</p>
-          <h1>O Rei Mandou</h1>
-        </div>
-        <div className="toolbar">
-          <span className="autosave"><Save size={16} aria-hidden /> Salvo {savedAt}</span>
-          <button type="button" className="icon-button" onClick={exportSheet} title="Exportar JSON"><Download size={18} /></button>
-          <button type="button" className="icon-button" onClick={() => fileInputRef.current?.click()} title="Importar JSON"><Upload size={18} /></button>
-          <button type="button" className="icon-button danger" onClick={resetSheet} title="Resetar ficha"><RotateCcw size={18} /></button>
-          <input ref={fileInputRef} className="sr-only" type="file" accept="application/json" onChange={importSheet} />
-        </div>
-      </header>
-
-      <section className="hero-strip">
-        <div className="hero-identity">
-          <div className="avatar-container" onClick={() => imageInputRef.current?.click()}>
-            {sheet.identity.avatarUrl ? (
-              <img src={sheet.identity.avatarUrl} alt="Avatar" className="character-avatar" />
-            ) : (
-              <div className="avatar-placeholder"><ImageIcon size={32} /></div>
-            )}
-            <input ref={imageInputRef} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} />
+    <>
+      <main className="app-shell">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Ficha digital</p>
+            <h1>O Rei Mandou</h1>
           </div>
-          
-          <div className="hero-name-wrap">
-            <p className="eyebrow">Personagem</p>
-            <input
-              className="hero-name"
-              value={sheet.identity.characterName}
-              onChange={(e) => updateIdentity('characterName', e.target.value)}
-              placeholder="Nome do personagem"
+          <div className="toolbar">
+            <span className="autosave"><Save size={16} aria-hidden /> Salvo {savedAt}</span>
+            <button type="button" className="icon-button" onClick={exportSheet} title="Exportar JSON"><Download size={18} /></button>
+            <button type="button" className="icon-button" onClick={() => fileInputRef.current?.click()} title="Importar JSON"><Upload size={18} /></button>
+            <button type="button" className="icon-button danger" onClick={resetSheet} title="Resetar ficha"><RotateCcw size={18} /></button>
+            <input ref={fileInputRef} className="sr-only" type="file" accept="application/json" onChange={importSheet} />
+          </div>
+        </header>
+
+        <section className="hero-strip">
+          <div className="hero-identity">
+            <div className="avatar-container" onClick={() => imageInputRef.current?.click()}>
+              {sheet.identity.avatarUrl ? (
+                <img src={sheet.identity.avatarUrl} alt="Avatar" className="character-avatar" />
+              ) : (
+                <div className="avatar-placeholder"><ImageIcon size={32} /></div>
+              )}
+              <input ref={imageInputRef} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} />
+            </div>
+            
+            <div className="hero-name-wrap">
+              <p className="eyebrow">Personagem</p>
+              <input
+                className="hero-name"
+                value={sheet.identity.characterName}
+                onChange={(e) => updateIdentity('characterName', e.target.value)}
+                placeholder="Nome do personagem"
+              />
+            </div>
+          </div>
+          <button type="button" className="primary-button" onClick={() => rollDice('d20 sem bônus')}>
+            <Dice5 size={20} aria-hidden /> Rolar d20
+          </button>
+        </section>
+
+        <section className="dashboard-grid">
+          {/* 1. Identidade */}
+          <Panel icon={<UserRound size={18} />} title="Identidade" className="identity-panel">
+            <div className="field-grid two">
+              <label>Jogador
+                <input value={sheet.identity.playerName} onChange={(e) => updateIdentity('playerName', e.target.value)} placeholder="Seu nome" />
+              </label>
+              <label>Classe
+                <span className="select-wrap">
+                  <select value={sheet.identity.className} onChange={(e) => updateIdentity('className', e.target.value as ClassName)}>
+                    {Object.keys(CLASS_DATA).map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                  <ChevronDown size={16} aria-hidden />
+                </span>
+              </label>
+              <NumberField label="Nível" value={sheet.identity.level} onChange={(v) => updateIdentity('level', v)} />
+              <NumberField label="Proficiência" value={sheet.identity.proficiency} onChange={(v) => updateIdentity('proficiency', v)} />
+            </div>
+            {/* Caixa de Destaque da Classe */}
+            <div className="class-note info-box">
+              <strong>{sheet.identity.className}</strong>
+              <span>{classInfo.ability}</span>
+            </div>
+          </Panel>
+
+          {/* 2. Lore do Personagem */}
+          <Panel icon={<BookOpen size={18} />} title="Lore do Personagem" className="notes-panel">
+            <RichTextEditor 
+              initialValue={sheet.notes} 
+              onChange={(val) => setSheet(c => ({ ...c, notes: val }))} 
             />
+          </Panel>
+
+          {/* 3. Combate e Vida */}
+          <Panel icon={<HeartPulse size={18} />} title="Combate e vida">
+            <div className="stat-grid">
+              <NumberField label="Vida atual" value={sheet.combat.currentHp} onChange={(v) => updateCombat('currentHp', v)} />
+              <NumberField label="Vida máxima" value={sheet.combat.maxHp} onChange={(v) => updateCombat('maxHp', v)} />
+              <NumberField label="CA" value={sheet.combat.armorClass} onChange={(v) => updateCombat('armorClass', v)} />
+              <NumberField label="Iniciativa" value={sheet.combat.initiative} onChange={(v) => updateCombat('initiative', v)} />
+              <NumberField label="Sanidade" value={sheet.combat.sanity} onChange={(v) => updateCombat('sanity', v)} />
+              <NumberField label="Deslocamento" value={sheet.combat.movement} onChange={(v) => updateCombat('movement', v)} />
+            </div>
+            <div className="quick-rolls">
+              <button type="button" className="primary-button small" onClick={() => rollDice('Iniciativa', sheet.attributes.destreza.mod + sheet.combat.initiative)}><Swords size={16} /> Iniciativa</button>
+              <button type="button" className="primary-button small" onClick={() => rollDice('Sanidade')}><Brain size={16} /> Sanidade</button>
+            </div>
+          </Panel>
+
+          {/* 4. Atributos */}
+          <Panel icon={<Activity size={18} />} title="Atributos">
+            <div className="attributes-list">
+              {(Object.keys(sheet.attributes) as AttributeKey[]).map((key) => (
+                <div className="attribute-row" key={key}>
+                  <button type="button" onClick={() => rollDice(ATTRIBUTE_LABELS[key], sheet.attributes[key].mod)}><Dice5 size={15} /></button>
+                  <span>{sheet.attributes[key].label}</span>
+                  <input type="number" value={sheet.attributes[key].value} onChange={(e) => updateAttribute(key, 'value', asNumber(e.target.value))} />
+                  <input type="number" value={sheet.attributes[key].mod} onChange={(e) => updateAttribute(key, 'mod', asNumber(e.target.value))} />
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          {/* 5. Perícias */}
+          <Panel icon={<Check size={18} />} title="Perícias" className="skills-panel">
+            {/* Caixa de Destaque das Sugestões */}
+            <div className="skill-helper info-box">
+              <span>{classInfo.picks}: {classInfo.suggested.join(', ')}</span>
+              <button type="button" className="primary-button small" onClick={trainSuggestedSkills}>Marcar sugestões</button>
+            </div>
+            <div className="skills-list">
+              {SKILLS.map((skill) => {
+                const trained = sheet.trainedSkills.includes(skill.name)
+                const bonus = sheet.attributes[skill.attribute].mod + (trained ? sheet.identity.proficiency : 0)
+                return (
+                  <div className={`skill-row ${trained ? 'trained' : ''}`} key={skill.name}>
+                    <label className="skill-label">
+                      <input type="checkbox" checked={trained} onChange={() => toggleSkill(skill.name)} /> 
+                      <span className="skill-name">{skill.name}</span>
+                    </label>
+                    <div className="skill-stats">
+                      <span className="skill-attr">{ATTRIBUTE_LABELS[skill.attribute].slice(0, 3)}</span>
+                      <button type="button" className="skill-bonus" onClick={() => rollDice(skill.name, bonus)}>{signed(bonus)}</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Panel>
+
+          {/* 6. Habilidades */}
+          <Panel icon={<Wand2 size={18} />} title="Habilidades" className="abilities-panel">
+            <div className="text-stack">
+              {sheet.customSkills.map((entry, index) => (
+                <div key={`skill-${index}`} className="ability-editor-wrapper">
+                  <label>Habilidade criada {index + 1}</label>
+                  <RichTextEditor initialValue={entry} onChange={(val) => updateTextList('customSkills', index, val)} />
+                </div>
+              ))}
+              {sheet.passives.map((entry, index) => (
+                <div key={`passive-${index}`} className="ability-editor-wrapper">
+                  <label>Passiva {index + 1}</label>
+                  <RichTextEditor initialValue={entry} onChange={(val) => updateTextList('passives', index, val)} />
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          {/* 7. Mochila */}
+          <Panel 
+            icon={<Archive size={18} />} 
+            title="Mochila" 
+            className="inventory-panel"
+            action={
+              <button type="button" className="primary-button small" onClick={addItem}>
+                <Plus size={16} /> Item
+              </button>
+            }
+          >
+            {/* Caixa de Destaque da Carga */}
+            <div className={`carry-warning info-box ${overloaded ? 'active' : ''}`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Shield size={16} /> {carriedWeight.toFixed(1)} kg / {carryLimit} kg
+              </div>
+              {overloaded && <strong style={{ color: 'var(--red)' }}>Sobrecarga</strong>}
+            </div>
+            <div className="items-list">
+              {sheet.items.map((item) => (
+                <div className="item-row" key={item.id}>
+                  <input value={item.name} onChange={(e) => updateItem(item.id, 'name', e.target.value)} placeholder="Item" />
+                  <input type="number" step="0.1" value={item.weight} onChange={(e) => updateItem(item.id, 'weight', asNumber(e.target.value))} />
+                  <input type="number" value={item.quantity} onChange={(e) => updateItem(item.id, 'quantity', asNumber(e.target.value))} />
+                  <button type="button" className="icon-button small danger" onClick={() => removeItem(item.id)}><Trash2 size={15} /></button>
+                </div>
+              ))}
+            </div>
+            <div className="inventory-actions">
+              <NumberField label="Ouro (PO)" value={sheet.gold} onChange={(v) => setSheet((c) => ({ ...c, gold: v }))} />
+            </div>
+          </Panel>
+
+          {/* 8. Últimas Rolagens */}
+          <Panel icon={<Sparkles size={18} />} title="Últimas rolagens" className="roll-panel">
+            {rollHistory.length > 0 ? (
+              <div className="roll-history">
+                {rollHistory.map((roll) => (
+                  <div className="roll-result" key={roll.id}>
+                    <span>{roll.label}</span>
+                    <strong>{roll.total}</strong>
+                    <small>d20 {roll.d20} {signed(roll.bonus)}</small>
+                  </div>
+                ))}
+              </div>
+            ) : <div className="empty-state">Role um teste para ver o resultado.</div>}
+          </Panel>
+
+        </section>
+      </main>
+
+      {/* Pop-up do Dado */}
+      {popupRoll && (
+        <div className="dice-popup-overlay" onClick={() => setPopupRoll(null)}>
+          <div className="dice-popup-content" onClick={e => e.stopPropagation()}>
+            <button className="close-popup" onClick={() => setPopupRoll(null)}><X size={20}/></button>
+            <Dice5 size={48} className="popup-icon" />
+            <h3>{popupRoll.label}</h3>
+            <div className="popup-total">{popupRoll.total}</div>
+            <p>Dado: {popupRoll.d20} | Bônus: {signed(popupRoll.bonus)}</p>
           </div>
         </div>
-        <button type="button" className="primary-button" onClick={() => rollDice('d20 sem bônus')}>
-          <Dice5 size={20} aria-hidden /> Rolar d20
-        </button>
-      </section>
-
-      <section className="dashboard-grid">
-        {/* 1. Identidade */}
-        <Panel icon={<UserRound size={18} />} title="Identidade" className="identity-panel">
-          <div className="field-grid two">
-            <label>Jogador
-              <input value={sheet.identity.playerName} onChange={(e) => updateIdentity('playerName', e.target.value)} placeholder="Seu nome" />
-            </label>
-            <label>Classe
-              <span className="select-wrap">
-                <select value={sheet.identity.className} onChange={(e) => updateIdentity('className', e.target.value as ClassName)}>
-                  {Object.keys(CLASS_DATA).map((c) => <option key={c}>{c}</option>)}
-                </select>
-                <ChevronDown size={16} aria-hidden />
-              </span>
-            </label>
-            <NumberField label="Nível" value={sheet.identity.level} onChange={(v) => updateIdentity('level', v)} />
-            <NumberField label="Proficiência" value={sheet.identity.proficiency} onChange={(v) => updateIdentity('proficiency', v)} />
-          </div>
-          {/* Caixa de Destaque da Classe */}
-          <div className="class-note info-box">
-            <strong>{sheet.identity.className}</strong>
-            <span>{classInfo.ability}</span>
-          </div>
-        </Panel>
-
-        {/* 2. Lore do Personagem */}
-        <Panel icon={<BookOpen size={18} />} title="Lore do Personagem" className="notes-panel">
-          <RichTextEditor 
-            initialValue={sheet.notes} 
-            onChange={(val) => setSheet(c => ({ ...c, notes: val }))} 
-          />
-        </Panel>
-
-        {/* 3. Combate e Vida */}
-        <Panel icon={<HeartPulse size={18} />} title="Combate e vida">
-          <div className="stat-grid">
-            <NumberField label="Vida atual" value={sheet.combat.currentHp} onChange={(v) => updateCombat('currentHp', v)} />
-            <NumberField label="Vida máxima" value={sheet.combat.maxHp} onChange={(v) => updateCombat('maxHp', v)} />
-            <NumberField label="CA" value={sheet.combat.armorClass} onChange={(v) => updateCombat('armorClass', v)} />
-            <NumberField label="Iniciativa" value={sheet.combat.initiative} onChange={(v) => updateCombat('initiative', v)} />
-            <NumberField label="Sanidade" value={sheet.combat.sanity} onChange={(v) => updateCombat('sanity', v)} />
-            <NumberField label="Deslocamento" value={sheet.combat.movement} onChange={(v) => updateCombat('movement', v)} />
-          </div>
-          <div className="quick-rolls">
-            <button type="button" className="primary-button small" onClick={() => rollDice('Iniciativa', sheet.attributes.destreza.mod + sheet.combat.initiative)}><Swords size={16} /> Iniciativa</button>
-            <button type="button" className="primary-button small" onClick={() => rollDice('Sanidade')}><Brain size={16} /> Sanidade</button>
-          </div>
-        </Panel>
-
-        {/* 4. Atributos */}
-        <Panel icon={<Activity size={18} />} title="Atributos">
-          <div className="attributes-list">
-            {(Object.keys(sheet.attributes) as AttributeKey[]).map((key) => (
-              <div className="attribute-row" key={key}>
-                <button type="button" onClick={() => rollDice(ATTRIBUTE_LABELS[key], sheet.attributes[key].mod)}><Dice5 size={15} /></button>
-                <span>{sheet.attributes[key].label}</span>
-                <input type="number" value={sheet.attributes[key].value} onChange={(e) => updateAttribute(key, 'value', asNumber(e.target.value))} />
-                <input type="number" value={sheet.attributes[key].mod} onChange={(e) => updateAttribute(key, 'mod', asNumber(e.target.value))} />
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        {/* 5. Perícias */}
-        <Panel icon={<Check size={18} />} title="Perícias" className="skills-panel">
-          {/* Caixa de Destaque das Sugestões */}
-          <div className="skill-helper info-box">
-            <span>{classInfo.picks}: {classInfo.suggested.join(', ')}</span>
-            <button type="button" className="primary-button small" onClick={trainSuggestedSkills}>Marcar sugestões</button>
-          </div>
-          <div className="skills-list">
-            {SKILLS.map((skill) => {
-              const trained = sheet.trainedSkills.includes(skill.name)
-              const bonus = sheet.attributes[skill.attribute].mod + (trained ? sheet.identity.proficiency : 0)
-              return (
-                <div className={`skill-row ${trained ? 'trained' : ''}`} key={skill.name}>
-                  <label className="skill-label">
-                    <input type="checkbox" checked={trained} onChange={() => toggleSkill(skill.name)} /> 
-                    <span className="skill-name">{skill.name}</span>
-                  </label>
-                  <div className="skill-stats">
-                    <span className="skill-attr">{ATTRIBUTE_LABELS[skill.attribute].slice(0, 3)}</span>
-                    <button type="button" className="skill-bonus" onClick={() => rollDice(skill.name, bonus)}>{signed(bonus)}</button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </Panel>
-
-        {/* 6. Habilidades */}
-        <Panel icon={<Wand2 size={18} />} title="Habilidades" className="abilities-panel">
-          <div className="text-stack">
-            {sheet.customSkills.map((entry, index) => (
-              <div key={`skill-${index}`} className="ability-editor-wrapper">
-                <label>Habilidade criada {index + 1}</label>
-                <RichTextEditor initialValue={entry} onChange={(val) => updateTextList('customSkills', index, val)} />
-              </div>
-            ))}
-            {sheet.passives.map((entry, index) => (
-              <div key={`passive-${index}`} className="ability-editor-wrapper">
-                <label>Passiva {index + 1}</label>
-                <RichTextEditor initialValue={entry} onChange={(val) => updateTextList('passives', index, val)} />
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        {/* 7. Mochila */}
-        <Panel 
-          icon={<Archive size={18} />} 
-          title="Mochila" 
-          className="inventory-panel"
-          action={
-            <button type="button" className="primary-button small" onClick={addItem}>
-              <Plus size={16} /> Item
-            </button>
-          }
-        >
-          {/* Caixa de Destaque da Carga */}
-          <div className={`carry-warning info-box ${overloaded ? 'active' : ''}`}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Shield size={16} /> {carriedWeight.toFixed(1)} kg / {carryLimit} kg
-            </div>
-            {overloaded && <strong style={{ color: 'var(--red)' }}>Sobrecarga</strong>}
-          </div>
-          <div className="items-list">
-            {sheet.items.map((item) => (
-              <div className="item-row" key={item.id}>
-                <input value={item.name} onChange={(e) => updateItem(item.id, 'name', e.target.value)} placeholder="Item" />
-                <input type="number" step="0.1" value={item.weight} onChange={(e) => updateItem(item.id, 'weight', asNumber(e.target.value))} />
-                <input type="number" value={item.quantity} onChange={(e) => updateItem(item.id, 'quantity', asNumber(e.target.value))} />
-                <button type="button" className="icon-button small danger" onClick={() => removeItem(item.id)}><Trash2 size={15} /></button>
-              </div>
-            ))}
-          </div>
-          <div className="inventory-actions">
-            <NumberField label="Ouro (PO)" value={sheet.gold} onChange={(v) => setSheet((c) => ({ ...c, gold: v }))} />
-          </div>
-        </Panel>
-
-        {/* 8. Últimas Rolagens */}
-        <Panel icon={<Sparkles size={18} />} title="Última rolagem" className="roll-panel">
-          {roll ? (
-            <div className="roll-result">
-              <span>{roll.label}</span>
-              <strong>{roll.total}</strong>
-              <small>d20 {roll.d20} {signed(roll.bonus)}</small>
-            </div>
-          ) : <div className="empty-state">Role um teste para ver o resultado.</div>}
-        </Panel>
-
-      </section>
-    </main>
+      )}
+    </>
   )
 }
 

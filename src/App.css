@@ -489,3 +489,126 @@ label {
   .hero-strip { flex-direction: column; align-items: stretch; }
   .hero-identity { flex-direction: column; align-items: center; text-align: center; }
 }
+
+/* ---- ADICIONE AO FINAL DO SEU App.css ---- */
+
+/* Histórico de Rolagens (Lista Vertical) */
+.roll-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.roll-history::-webkit-scrollbar {
+  width: 6px;
+}
+.roll-history::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.roll-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-2);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.roll-result span { 
+  flex: 1; 
+  font-size: 0.95rem; 
+  color: var(--text-strong);
+}
+.roll-result strong { 
+  font-size: 1.3rem; 
+  color: var(--gold); 
+  margin: 0 1.5rem; 
+}
+.roll-result small { 
+  font-size: 0.8rem; 
+  color: var(--muted); 
+  min-width: 65px; 
+  text-align: right; 
+}
+
+/* --- Pop-up do Dado --- */
+.dice-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dice-popup-content {
+  background: var(--surface);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  position: relative;
+  min-width: 320px;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.close-popup {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.close-popup:hover { color: var(--red); }
+
+.popup-icon {
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.dice-popup-content h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-strong);
+  font-size: 1.2rem;
+}
+
+.popup-total {
+  font-size: 4.5rem;
+  font-weight: bold;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.dice-popup-content p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

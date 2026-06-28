@@ -47,15 +47,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const refreshSession = useCallback(async () => {
+    const next = await getSession()
+    setSession(next)
+  }, [])
+
   const signIn = useCallback(
-    (credentials: SignInCredentials) => signInWithPassword(credentials),
-    [],
+    async (credentials: SignInCredentials) => {
+      const result = await signInWithPassword(credentials)
+      if (!result.error) await refreshSession()
+      return result
+    },
+    [refreshSession],
   )
   const signUp = useCallback(
-    (credentials: SignUpCredentials) => serviceSignUp(credentials),
-    [],
+    async (credentials: SignUpCredentials) => {
+      const result = await serviceSignUp(credentials)
+      if (!result.error) await refreshSession()
+      return result
+    },
+    [refreshSession],
   )
-  const signInWithGoogle = useCallback(() => serviceSignInWithGoogle(), [])
+  const signInWithGoogle = useCallback(async () => {
+    const result = await serviceSignInWithGoogle()
+    if (!result.error && isGuestMode) await refreshSession()
+    return result
+  }, [refreshSession])
 
   const signOut = useCallback(async () => {
     const result = await serviceSignOut()

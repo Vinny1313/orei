@@ -1,54 +1,75 @@
-// Painel de Perícias: lista treinável, atalho de sugestões da classe e bônus por perícia.
-
-import { Check } from 'lucide-react'
+import { Check, Dice5 } from 'lucide-react'
 import { ATTRIBUTE_LABELS, CLASS_DATA, SKILLS } from '../../../data/characterData'
-import type { CharacterSheet } from '../../../types/character'
+import type { AttributeKey, CharacterSheet, RollSource } from '../../../types/character'
 import { signed } from '../../../utils/formatters'
-import { Panel } from '../../ui/Panel'
+import { AttributePicker } from '../AttributePicker'
 
 type SkillsSectionProps = {
   sheet: CharacterSheet
   toggleSkill: (name: string) => void
   trainSuggestedSkills: () => void
-  rollDice: (label: string, bonus?: number) => void
+  updateSkillAttribute: (skillName: string, attribute: AttributeKey) => void
+  rollDice: (label: string, bonus?: number, source?: RollSource) => void
 }
 
 export function SkillsSection({
   sheet,
   toggleSkill,
   trainSuggestedSkills,
+  updateSkillAttribute,
   rollDice,
 }: SkillsSectionProps) {
   const classInfo = CLASS_DATA[sheet.identity.className]
 
   return (
-    <Panel icon={<Check size={18} />} title="Perícias" className="skills-panel">
-      <div className="skill-helper">
-        <span>
-          {classInfo.picks}: {classInfo.suggested.join(', ')}
-        </span>
-        <button type="button" onClick={trainSuggestedSkills}>
-          Marcar sugestões
+    <section className="skills-tab">
+      <header className="tab-section-header">
+        <div>
+          <p className="eyebrow">Pericias</p>
+          <h2>Treino, atributo base e testes</h2>
+        </div>
+        <button type="button" className="ghost-button" onClick={trainSuggestedSkills}>
+          <Check size={16} aria-hidden />
+          Marcar sugestoes
         </button>
+      </header>
+
+      <div className="attribute-summary-grid">
+        {(Object.keys(sheet.attributes) as AttributeKey[]).map((key) => (
+          <span key={key}>
+            <small>{ATTRIBUTE_LABELS[key].slice(0, 3)}</small>
+            <strong>{signed(sheet.attributes[key].mod)}</strong>
+          </span>
+        ))}
       </div>
-      <div className="skills-list">
+
+      <p className="skill-helper-text">
+        {sheet.identity.className}: {classInfo.picks} entre {classInfo.suggested.join(', ')}.
+      </p>
+
+      <div className="skills-list upgraded">
         {SKILLS.map((skill) => {
           const trained = sheet.trainedSkills.includes(skill.name)
-          const bonus = sheet.attributes[skill.attribute].mod + (trained ? sheet.identity.proficiency : 0)
+          const attribute = sheet.skillAttributeOverrides[skill.name] ?? skill.attribute
+          const bonus = sheet.attributes[attribute].mod + (trained ? sheet.identity.proficiency : 0)
           return (
-            <div className={trained ? 'skill-row trained' : 'skill-row'} key={skill.name}>
+            <article className={trained ? 'skill-row trained' : 'skill-row'} key={skill.name}>
               <label>
                 <input type="checkbox" checked={trained} onChange={() => toggleSkill(skill.name)} />
                 <span>{skill.name}</span>
               </label>
-              <small>{ATTRIBUTE_LABELS[skill.attribute].slice(0, 3)}</small>
-              <button type="button" onClick={() => rollDice(skill.name, bonus)}>
+              <AttributePicker
+                value={attribute}
+                onChange={(nextAttribute) => updateSkillAttribute(skill.name, nextAttribute)}
+              />
+              <button type="button" onClick={() => rollDice(skill.name, bonus, 'skill')}>
+                <Dice5 size={15} aria-hidden />
                 {signed(bonus)}
               </button>
-            </div>
+            </article>
           )
         })}
       </div>
-    </Panel>
+    </section>
   )
 }

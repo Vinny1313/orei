@@ -182,27 +182,54 @@ type MemberRow = {
   user_id: string
   role: CampaignRole
   joined_at: string
-  profile?: { username: string | null; display_name: string | null; email: string | null } | null
+}
+
+type MemberProfileRow = {
+  id: string
+  username: string | null
+  display_name: string | null
+  email: string | null
 }
 
 export const listMembers = async (campaignId: string): Promise<CampaignMember[]> => {
   const client = requireClient()
   const { data, error } = await client
     .from('campaign_members')
-    .select('*, profile:profiles(username, display_name, email)')
+    .select('*')
     .eq('campaign_id', campaignId)
     .order('joined_at', { ascending: true })
   if (error) throw new Error(error.message)
-  return ((data ?? []) as MemberRow[]).map((m) => ({
-    id: m.id,
-    campaignId: m.campaign_id,
-    userId: m.user_id,
-    role: m.role,
-    joinedAt: m.joined_at,
-    username: m.profile?.username,
-    displayName: m.profile?.display_name,
-    email: m.profile?.email,
-  }))
+
+  const members = (data ?? []) as MemberRow[]
+  if (members.length === 0) return []
+
+  const userIds = [...new Set(members.map((member) => member.user_id))]
+  let profilesById = new Map<string, MemberProfileRow>()
+  try {
+    const { data: profileData } = await client
+      .from('profiles')
+      .select('id, username, display_name, email')
+      .in('id', userIds)
+    profilesById = new Map(
+      ((profileData ?? []) as MemberProfileRow[]).map((profile) => [profile.id, profile]),
+    )
+  } catch {
+    profilesById = new Map()
+  }
+
+  return members.map((m) => {
+    const profile = profilesById.get(m.user_id)
+    return {
+      id: m.id,
+      campaignId: m.campaign_id,
+      userId: m.user_id,
+      role: m.role,
+      joinedAt: m.joined_at,
+      username: profile?.username,
+      displayName: profile?.display_name,
+      email: profile?.email,
+    }
+  })
 }
 
 type CampaignCharacterRow = {

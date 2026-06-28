@@ -1,7 +1,14 @@
 // Dados estáticos da ficha: rótulos de atributos, lista de perícias, dados por classe
 // e a fábrica da ficha padrão. Movidos do antigo App.tsx.
 
-import type { AttributeKey, CharacterSheet, ClassName, Skill } from '../types/character'
+import type {
+  AbilityEntry,
+  AttributeKey,
+  CharacterSheet,
+  ClassName,
+  PassiveEntry,
+  Skill,
+} from '../types/character'
 
 export const ATTRIBUTE_LABELS: Record<AttributeKey, string> = {
   forca: 'Força',
@@ -85,6 +92,26 @@ export const CLASS_DATA: Record<
   },
 }
 
+export const createBlankAbility = (): AbilityEntry => ({
+  id: crypto.randomUUID(),
+  name: '',
+  range: '',
+  area: '',
+  effect: '',
+  description: '',
+  damageFormula: '',
+})
+
+export const createBlankPassive = (): PassiveEntry => ({
+  id: crypto.randomUUID(),
+  name: '',
+  range: '',
+  area: '',
+  effect: '',
+  description: '',
+  damageFormula: '',
+})
+
 export const createDefaultSheet = (): CharacterSheet => ({
   identity: {
     characterName: '',
@@ -110,9 +137,11 @@ export const createDefaultSheet = (): CharacterSheet => ({
     movement: 9,
   },
   trainedSkills: [],
-  customSkills: ['', ''],
-  passives: ['', ''],
+  skillAttributeOverrides: {},
+  abilities: [createBlankAbility()],
+  passives: [createBlankPassive()],
   items: [{ id: crypto.randomUUID(), name: 'Tocha', weight: 1, quantity: 1 }],
   gold: 0,
   notes: '',
+  rollHistory: [],
 })

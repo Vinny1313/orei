@@ -32,12 +32,44 @@ export type Skill = {
   attribute: AttributeKey
 }
 
+export type DiceFormula = string
+
+export type RollSource = 'attribute' | 'skill' | 'initiative' | 'damage' | 'generic'
+
+export type RollHistoryEntry = {
+  id: string
+  createdAt: string
+  label: string
+  formula: DiceFormula
+  rolls: number[]
+  kept: number
+  bonus: number
+  total: number
+  source: RollSource
+}
+
+export type AbilityEntry = {
+  id: string
+  name: string
+  range: string
+  area: string
+  effect: string
+  description: string
+  damageFormula: DiceFormula
+}
+
+export type PassiveEntry = Partial<Omit<AbilityEntry, 'id'>> & {
+  id: string
+}
+
 export type Item = {
   id: string
   name: string
   weight: number
   quantity: number
 }
+
+export type SheetTab = 'principal' | 'pericias' | 'habilidades' | 'mochila'
 
 export type CharacterSheet = {
   identity: {
@@ -57,11 +89,13 @@ export type CharacterSheet = {
     movement: number
   }
   trainedSkills: string[]
-  customSkills: string[]
-  passives: string[]
+  skillAttributeOverrides: Record<string, AttributeKey>
+  abilities: AbilityEntry[]
+  passives: PassiveEntry[]
   items: Item[]
   gold: number
   notes: string
+  rollHistory: RollHistoryEntry[]
 }
 
 export type RollResult = {

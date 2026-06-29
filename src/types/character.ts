@@ -108,6 +108,7 @@ export type RollResult = {
 // Envelope persistido: a ficha + metadados de versionamento/identidade.
 export type Character = {
   id: string
+  routeKey: string
   createdAt: string
   updatedAt: string
   sheet: CharacterSheet
@@ -116,6 +117,7 @@ export type Character = {
 // Resumo leve para o dashboard de agentes (evita carregar a ficha inteira na lista).
 export type CharacterSummary = {
   id: string
+  routeKey: string
   characterName: string
   className: ClassName
   level: number

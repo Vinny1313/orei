@@ -37,10 +37,10 @@ export function CampaignDetailPage() {
 }
 
 function CampaignDetailPageContent() {
-  const { id } = useParams<{ id: string }>()
+  const { routeKey } = useParams<{ routeKey: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { campaign, members, characters, loading, error, reload } = useCampaign(id)
+  const { campaign, members, characters, loading, error, reload } = useCampaign(routeKey)
   const {
     characters: myCharacters,
     loading: loadingMyCharacters,

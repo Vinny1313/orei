@@ -6,6 +6,7 @@ export type CampaignRole = 'MASTER' | 'PLAYER'
 
 export type Campaign = {
   id: string
+  routeKey: string
   ownerId: string
   name: string
   description: string

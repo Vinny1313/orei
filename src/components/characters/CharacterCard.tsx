@@ -43,11 +43,11 @@ export function CharacterCard({ character, onDelete }: CharacterCardProps) {
       </div>
 
       <footer className="character-card__actions">
-        <Link to={`/agentes/${character.id}`} className="card-action primary">
+        <Link to={`/agentes/${character.routeKey}`} className="card-action primary">
           <ScrollText size={15} aria-hidden />
           Abrir ficha
         </Link>
-        <Link to={`/agentes/${character.id}`} className="card-action" title="Editar ficha">
+        <Link to={`/agentes/${character.routeKey}`} className="card-action" title="Editar ficha">
           <Pencil size={15} aria-hidden />
           Editar
         </Link>

@@ -31,9 +31,9 @@ function CampaignsPageContent() {
     setJoining(true)
     setJoinError(null)
     try {
-      const campaignId = await joinByCode(code)
+      const campaign = await joinByCode(code)
       setCode('')
-      navigate(`/campanhas/${campaignId}`)
+      navigate(`/campanhas/${campaign.routeKey}`)
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : 'Nao foi possivel entrar na campanha.')
       setJoining(false)

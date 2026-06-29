@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { authMode } from '../../services/authService'
 import { signInSchema } from '../../utils/validators'
 import { GoogleLoginButton } from './GoogleLoginButton'
+import { PasswordField } from './PasswordField'
 
 type FieldErrors = Partial<Record<'email' | 'password', string>>
 
@@ -24,13 +25,17 @@ const resolveRedirect = (state: unknown): string => {
   return '/agentes'
 }
 
+const clearPasswordFields = (form: HTMLFormElement) => {
+  const passwordField = form.elements.namedItem('password')
+  if (passwordField instanceof HTMLInputElement) passwordField.value = ''
+}
+
 export function LoginForm() {
   const { signIn, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -39,11 +44,18 @@ export function LoginForm() {
   const disabledEnv = authMode === 'disabled'
   const redirectTo = resolveRedirect(location.state)
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setFormError(null)
 
-    const parsed = signInSchema.safeParse({ email, password })
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const parsed = signInSchema.safeParse({
+      email,
+      password: String(formData.get('password') ?? ''),
+    })
+    clearPasswordFields(form)
+
     if (!parsed.success) {
       const flat = parsed.error.flatten().fieldErrors
       setFieldErrors({ email: flat.email?.[0], password: flat.password?.[0] })
@@ -100,19 +112,13 @@ export function LoginForm() {
         {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
       </label>
 
-      <label>
-        Senha
-        <input
-          type="password"
-          name="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          aria-invalid={!!fieldErrors.password}
-          disabled={submitting}
-        />
-        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
-      </label>
+      <PasswordField
+        label="Senha"
+        name="password"
+        autoComplete="current-password"
+        error={fieldErrors.password}
+        disabled={submitting}
+      />
 
       {formError && (
         <p className="form-error" role="alert">

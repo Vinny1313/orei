@@ -40,6 +40,7 @@ const currentUserId = async (client: SupabaseClient): Promise<string> => {
 // ── Row shapes (de/para snake_case → camelCase) ─────────────────────────────
 type CampaignRow = {
   id: string
+  route_key?: string | null
   owner_id: string
   name: string
   description: string
@@ -55,6 +56,7 @@ const mapCampaign = (row: CampaignRow, meId?: string): Campaign => {
   const members = row.campaign_members
   return {
     id: row.id,
+    routeKey: row.route_key ?? row.id,
     ownerId: row.owner_id,
     name: row.name,
     description: row.description,
@@ -70,6 +72,14 @@ const mapCampaign = (row: CampaignRow, meId?: string): Campaign => {
 
 const CAMPAIGN_SELECT = '*, campaign_members(user_id, role)'
 
+const isMissingRouteKeyError = (error: { message?: string; code?: string } | null): boolean =>
+  error?.code === '42703' || error?.message?.includes('route_key') === true
+
+const isUuid = (value: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  )
+
 // ── Operações ───────────────────────────────────────────────────────────────
 
 /** Campanhas onde sou mestre ou jogador (a RLS já filtra para as minhas). */
@@ -84,13 +94,27 @@ export const listMyCampaigns = async (): Promise<Campaign[]> => {
   return ((data ?? []) as CampaignRow[]).map((row) => mapCampaign(row, me))
 }
 
-export const getCampaign = async (id: string): Promise<Campaign | null> => {
+export const getCampaign = async (routeKey: string): Promise<Campaign | null> => {
   const client = requireClient()
   const me = await currentUserId(client)
+  const byRouteKey = await client
+    .from('campaigns')
+    .select(CAMPAIGN_SELECT)
+    .eq('route_key', routeKey)
+    .maybeSingle()
+
+  if (!byRouteKey.error && byRouteKey.data) {
+    return mapCampaign(byRouteKey.data as CampaignRow, me)
+  }
+  if (byRouteKey.error && !isMissingRouteKeyError(byRouteKey.error)) {
+    throw new Error(byRouteKey.error.message)
+  }
+  if (!isUuid(routeKey)) return null
+
   const { data, error } = await client
     .from('campaigns')
     .select(CAMPAIGN_SELECT)
-    .eq('id', id)
+    .eq('id', routeKey)
     .maybeSingle()
   if (error) throw new Error(error.message)
   return data ? mapCampaign(data as CampaignRow, me) : null
@@ -141,13 +165,21 @@ export const deleteCampaign = async (id: string): Promise<void> => {
 }
 
 /** Entra numa campanha pelo código de convite (RPC SECURITY DEFINER). Retorna o id. */
-export const joinByCode = async (code: string): Promise<string> => {
+export const joinByCode = async (code: string): Promise<Campaign> => {
   const client = requireClient()
+  const me = await currentUserId(client)
   const { data, error } = await client.rpc('join_campaign', {
     p_invite_code: code.trim().toUpperCase(),
   })
   if (error) throw new Error(error.message)
-  return data as string
+
+  const { data: campaign, error: campaignError } = await client
+    .from('campaigns')
+    .select(CAMPAIGN_SELECT)
+    .eq('id', data as string)
+    .single()
+  if (campaignError) throw new Error(campaignError.message)
+  return mapCampaign(campaign as CampaignRow, me)
 }
 
 /** Jogador sai da campanha (remove a própria membership). */

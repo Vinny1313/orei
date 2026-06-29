@@ -34,7 +34,7 @@ function NewCampaignPageContent() {
         name: values.name.trim(),
         description: values.description.trim(),
       })
-      navigate(`/campanhas/${campaign.id}`)
+      navigate(`/campanhas/${campaign.routeKey}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel criar a campanha.')
       setSubmitting(false)

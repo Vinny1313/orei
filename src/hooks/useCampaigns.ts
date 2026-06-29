@@ -51,7 +51,7 @@ type UseCampaignResult = {
 }
 
 /** Detalhe de uma campanha: dados + membros + personagens vinculados. */
-export function useCampaign(id: string | undefined): UseCampaignResult {
+export function useCampaign(routeKey: string | undefined): UseCampaignResult {
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [members, setMembers] = useState<CampaignMember[]>([])
   const [characters, setCharacters] = useState<CampaignCharacter[]>([])
@@ -59,18 +59,27 @@ export function useCampaign(id: string | undefined): UseCampaignResult {
   const [error, setError] = useState<string | null>(null)
 
   const reload = useCallback(async () => {
-    if (!id) {
+    if (!routeKey) {
       setCampaign(null)
+      setMembers([])
+      setCharacters([])
       setLoading(false)
       return
     }
     setLoading(true)
     setError(null)
     try {
-      const [campaignData, memberData, characterData] = await Promise.all([
-        getCampaign(id),
-        listMembers(id),
-        listCampaignCharacters(id),
+      const campaignData = await getCampaign(routeKey)
+      if (!campaignData) {
+        setCampaign(null)
+        setMembers([])
+        setCharacters([])
+        return
+      }
+
+      const [memberData, characterData] = await Promise.all([
+        listMembers(campaignData.id),
+        listCampaignCharacters(campaignData.id),
       ])
       setCampaign(campaignData)
       setMembers(memberData)
@@ -80,7 +89,7 @@ export function useCampaign(id: string | undefined): UseCampaignResult {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [routeKey])
 
   useEffect(() => {
     void reload()

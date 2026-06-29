@@ -10,7 +10,13 @@ const email = z
   .min(1, 'Informe seu e-mail.')
   .email('E-mail inválido.')
 
-const password = z.string().min(6, 'A senha deve ter ao menos 6 caracteres.')
+const signInPassword = z.string().min(1, 'Informe sua senha.')
+
+const newPassword = z
+  .string()
+  .min(12, 'A senha deve ter ao menos 12 caracteres.')
+  .regex(/[A-Za-z]/, 'A senha deve conter ao menos uma letra.')
+  .regex(/[0-9]/, 'A senha deve conter ao menos um nÃºmero.')
 
 const username = z
   .string()
@@ -21,7 +27,7 @@ const username = z
 /** Login: e-mail válido + senha mínima. */
 export const signInSchema = z.object({
   email,
-  password,
+  password: signInPassword,
 })
 
 /**
@@ -33,7 +39,7 @@ export const signUpSchema = z
     username,
     displayName: z.string().trim().max(60).optional(),
     email,
-    password,
+    password: newPassword,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

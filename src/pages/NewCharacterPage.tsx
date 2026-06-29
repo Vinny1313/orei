@@ -45,7 +45,7 @@ export function NewCharacterPage() {
           proficiency: 2,
         },
       })
-      navigate(`/agentes/${character.id}`)
+      navigate(`/agentes/${character.routeKey}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar o personagem.')
       setSubmitting(false)

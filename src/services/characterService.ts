@@ -19,7 +19,8 @@ const store: CharacterStore = supabase
 
 export const listCharacters = (): Promise<Character[]> => store.list()
 
-export const getCharacter = (id: string): Promise<Character | null> => store.get(id)
+export const getCharacter = (routeKey: string): Promise<Character | null> =>
+  store.getByRouteKey(routeKey)
 
 export const createCharacter = (initial?: Partial<CharacterSheet>): Promise<Character> =>
   store.create(initial)

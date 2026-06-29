@@ -42,7 +42,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
       </div>
 
       <footer className="character-card__actions">
-        <Link to={`/campanhas/${campaign.id}`} className="card-action primary">
+        <Link to={`/campanhas/${campaign.routeKey}`} className="card-action primary">
           Abrir campanha
         </Link>
       </footer>

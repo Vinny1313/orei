@@ -5,6 +5,7 @@
 
 import { createDefaultSheet } from '../../data/characterData'
 import type { Character, CharacterSheet } from '../../types/character'
+import { createRouteKey } from '../../utils/routeKeys'
 import type { CharacterStore } from './CharacterStore'
 import { normalizeSheet } from './normalizeSheet'
 
@@ -20,16 +21,23 @@ const writeStore = (characters: Character[]): void => {
 /** Lê e migra o store bruto do localStorage. */
 const readStore = (): Character[] => {
   let characters: Character[] = []
+  let migrated = false
 
   const raw = localStorage.getItem(STORAGE_KEY)
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as Character[]
       if (Array.isArray(parsed)) {
-        characters = parsed.map((character) => ({
-          ...character,
-          sheet: normalizeSheet(character.sheet),
-        }))
+        characters = parsed.map((character) => {
+          const routeKey = character.routeKey || createRouteKey()
+          if (!character.routeKey) migrated = true
+
+          return {
+            ...character,
+            routeKey,
+            sheet: normalizeSheet(character.sheet),
+          }
+        })
       }
     } catch {
       characters = []
@@ -46,6 +54,7 @@ const readStore = (): Character[] => {
         const sheet = normalizeSheet(JSON.parse(legacy))
         const migrated: Character = {
           id: crypto.randomUUID(),
+          routeKey: createRouteKey(),
           createdAt: nowIso(),
           updatedAt: nowIso(),
           sheet,
@@ -58,18 +67,22 @@ const readStore = (): Character[] => {
     }
   }
 
+  if (migrated) writeStore(characters)
+
   return characters
 }
 
 export const localCharacterStore: CharacterStore = {
   list: async () => readStore(),
 
-  get: async (id) => readStore().find((character) => character.id === id) ?? null,
+  getByRouteKey: async (routeKey) =>
+    readStore().find((character) => character.routeKey === routeKey) ?? null,
 
   create: async (initial?: Partial<CharacterSheet>) => {
     const characters = readStore()
     const character: Character = {
       id: crypto.randomUUID(),
+      routeKey: createRouteKey(),
       createdAt: nowIso(),
       updatedAt: nowIso(),
       sheet: { ...createDefaultSheet(), ...initial },

@@ -12,9 +12,17 @@ import { useAuth } from '../../hooks/useAuth'
 import { authMode } from '../../services/authService'
 import { signUpSchema } from '../../utils/validators'
 import { GoogleLoginButton } from './GoogleLoginButton'
+import { PasswordField } from './PasswordField'
 
 type FieldKey = 'username' | 'displayName' | 'email' | 'password' | 'confirmPassword'
 type FieldErrors = Partial<Record<FieldKey, string>>
+
+const clearPasswordFields = (form: HTMLFormElement) => {
+  for (const name of ['password', 'confirmPassword']) {
+    const field = form.elements.namedItem(name)
+    if (field instanceof HTMLInputElement) field.value = ''
+  }
+}
 
 export function RegisterForm() {
   const { signUp, signInWithGoogle } = useAuth()
@@ -23,8 +31,6 @@ export function RegisterForm() {
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -33,17 +39,21 @@ export function RegisterForm() {
 
   const disabledEnv = authMode === 'disabled'
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setFormError(null)
 
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const parsed = signUpSchema.safeParse({
       username,
       displayName: displayName || undefined,
       email,
-      password,
-      confirmPassword,
+      password: String(formData.get('password') ?? ''),
+      confirmPassword: String(formData.get('confirmPassword') ?? ''),
     })
+    clearPasswordFields(form)
+
     if (!parsed.success) {
       const flat = parsed.error.flatten().fieldErrors
       setFieldErrors({
@@ -155,35 +165,21 @@ export function RegisterForm() {
         {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
       </label>
 
-      <label>
-        Senha
-        <input
-          type="password"
-          name="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          aria-invalid={!!fieldErrors.password}
-          disabled={submitting}
-        />
-        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
-      </label>
+      <PasswordField
+        label="Senha"
+        name="password"
+        autoComplete="new-password"
+        error={fieldErrors.password}
+        disabled={submitting}
+      />
 
-      <label>
-        Confirmar senha
-        <input
-          type="password"
-          name="confirmPassword"
-          autoComplete="new-password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          aria-invalid={!!fieldErrors.confirmPassword}
-          disabled={submitting}
-        />
-        {fieldErrors.confirmPassword && (
-          <span className="field-error">{fieldErrors.confirmPassword}</span>
-        )}
-      </label>
+      <PasswordField
+        label="Confirmar senha"
+        name="confirmPassword"
+        autoComplete="new-password"
+        error={fieldErrors.confirmPassword}
+        disabled={submitting}
+      />
 
       {formError && (
         <p className="form-error" role="alert">

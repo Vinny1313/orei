@@ -12,6 +12,7 @@ import { normalizeSheet } from './normalizeSheet'
 /** Shape da linha da tabela public.characters. */
 type CharacterRow = {
   id: string
+  route_key?: string | null
   owner_id: string
   sheet: unknown
   created_at: string
@@ -20,10 +21,19 @@ type CharacterRow = {
 
 const mapRow = (row: CharacterRow): Character => ({
   id: row.id,
+  routeKey: row.route_key ?? row.id,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   sheet: normalizeSheet(row.sheet),
 })
+
+const isMissingRouteKeyError = (error: { message?: string; code?: string } | null): boolean =>
+  error?.code === '42703' || error?.message?.includes('route_key') === true
+
+const isUuid = (value: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  )
 
 export const createSupabaseCharacterStore = (supabase: SupabaseClient): CharacterStore => ({
   list: async () => {
@@ -35,11 +45,25 @@ export const createSupabaseCharacterStore = (supabase: SupabaseClient): Characte
     return ((data ?? []) as CharacterRow[]).map(mapRow)
   },
 
-  get: async (id) => {
+  getByRouteKey: async (routeKey) => {
+    const byRouteKey = await supabase
+      .from('characters')
+      .select('*')
+      .eq('route_key', routeKey)
+      .maybeSingle()
+
+    if (!byRouteKey.error && byRouteKey.data) {
+      return mapRow(byRouteKey.data as CharacterRow)
+    }
+    if (byRouteKey.error && !isMissingRouteKeyError(byRouteKey.error)) {
+      throw new Error(byRouteKey.error.message)
+    }
+    if (!isUuid(routeKey)) return null
+
     const { data, error } = await supabase
       .from('characters')
       .select('*')
-      .eq('id', id)
+      .eq('id', routeKey)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data ? mapRow(data as CharacterRow) : null

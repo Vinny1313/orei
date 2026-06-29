@@ -6,7 +6,7 @@ import type { Character, CharacterSheet } from '../../types/character'
 
 export type CharacterStore = {
   list: () => Promise<Character[]>
-  get: (id: string) => Promise<Character | null>
+  getByRouteKey: (routeKey: string) => Promise<Character | null>
   create: (initial?: Partial<CharacterSheet>) => Promise<Character>
   update: (id: string, sheet: CharacterSheet) => Promise<Character>
   remove: (id: string) => Promise<void>

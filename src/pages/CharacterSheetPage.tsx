@@ -6,8 +6,8 @@ import { CharacterSheet } from '../components/characters/CharacterSheet'
 import { useCharacter } from '../hooks/useCharacters'
 
 export function CharacterSheetPage() {
-  const { id } = useParams<{ id: string }>()
-  const { character, loading, error, save } = useCharacter(id)
+  const { routeKey } = useParams<{ routeKey: string }>()
+  const { character, loading, error, save } = useCharacter(routeKey)
 
   if (loading) {
     return (

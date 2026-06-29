@@ -45,10 +45,10 @@ export const router = createBrowserRouter([
         children: [
           { path: '/agentes', element: <CharactersPage /> },
           { path: '/agentes/novo', element: <NewCharacterPage /> },
-          { path: '/agentes/:id', element: <CharacterSheetPage /> },
+          { path: '/agentes/:routeKey', element: <CharacterSheetPage /> },
           { path: '/campanhas', element: <CampaignsPage /> },
           { path: '/campanhas/nova', element: <NewCampaignPage /> },
-          { path: '/campanhas/:id', element: <CampaignDetailPage /> },
+          { path: '/campanhas/:routeKey', element: <CampaignDetailPage /> },
           { path: '/perfil', element: <ProfilePage /> },
         ],
       },

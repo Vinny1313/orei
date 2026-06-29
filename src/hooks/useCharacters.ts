@@ -60,7 +60,7 @@ type UseCharacterResult = {
 }
 
 /** Personagem individual para a página de ficha. */
-export function useCharacter(id: string | undefined): UseCharacterResult {
+export function useCharacter(routeKey: string | undefined): UseCharacterResult {
   const [character, setCharacter] = useState<Character | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,13 +70,13 @@ export function useCharacter(id: string | undefined): UseCharacterResult {
     setLoading(true)
     setError(null)
 
-    if (!id) {
+    if (!routeKey) {
       setCharacter(null)
       setLoading(false)
       return
     }
 
-    getCharacter(id)
+    getCharacter(routeKey)
       .then((found) => {
         if (active) {
           setCharacter(found)
@@ -96,18 +96,18 @@ export function useCharacter(id: string | undefined): UseCharacterResult {
     return () => {
       active = false
     }
-  }, [id])
+  }, [routeKey])
 
   const save = useCallback(
     async (sheet: CharacterSheet): Promise<Character> => {
-      if (!id) {
-        throw new Error('Sem id de personagem para salvar.')
+      if (!character) {
+        throw new Error('Sem personagem carregado para salvar.')
       }
-      const updated = await updateCharacter(id, sheet)
+      const updated = await updateCharacter(character.id, sheet)
       setCharacter(updated)
       return updated
     },
-    [id],
+    [character],
   )
 
   return { character, loading, error, save }

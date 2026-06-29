@@ -1,16 +1,18 @@
-// Formulário de cadastro (username + e-mail + senha + confirmação) + Google.
-// Valida com zod, mostra erros por campo/gerais e estados de loading.
+// Formulário de cadastro. Fluxo principal é o Google (botão em destaque no topo);
+// os campos (username + e-mail + senha + confirmação) ficam recolhidos atrás de um
+// toggle "Criar conta com e-mail". Valida com zod, mostra erros por campo/gerais.
 //
 // Em auth real, o Supabase normalmente exige confirmação de e-mail antes de criar
 // sessão — por isso, em sucesso, exibimos um aviso para checar o e-mail (e não
 // forçamos navegação). No modo visitante, segue direto para /agentes.
 
-import { AlertTriangle, MailCheck } from 'lucide-react'
+import { AlertTriangle, Mail, MailCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { authMode } from '../../services/authService'
 import { signUpSchema } from '../../utils/validators'
+import { Field } from '../ui/Field'
 import { GoogleLoginButton } from './GoogleLoginButton'
 import { PasswordField } from './PasswordField'
 
@@ -36,6 +38,7 @@ export function RegisterForm() {
   const [submitting, setSubmitting] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showEmail, setShowEmail] = useState(false)
 
   const disabledEnv = authMode === 'disabled'
 
@@ -122,85 +125,96 @@ export function RegisterForm() {
         </p>
       )}
 
-      <label>
-        Nome de usuário
-        <input
-          type="text"
-          name="username"
-          autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          aria-invalid={!!fieldErrors.username}
-          disabled={submitting}
-        />
-        {fieldErrors.username && <span className="field-error">{fieldErrors.username}</span>}
-      </label>
-
-      <label>
-        Nome de exibição <span className="field-optional">(opcional)</span>
-        <input
-          type="text"
-          name="displayName"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          aria-invalid={!!fieldErrors.displayName}
-          disabled={submitting}
-        />
-        {fieldErrors.displayName && (
-          <span className="field-error">{fieldErrors.displayName}</span>
-        )}
-      </label>
-
-      <label>
-        E-mail
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          aria-invalid={!!fieldErrors.email}
-          disabled={submitting}
-        />
-        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
-      </label>
-
-      <PasswordField
-        label="Senha"
-        name="password"
-        autoComplete="new-password"
-        error={fieldErrors.password}
-        disabled={submitting}
-      />
-
-      <PasswordField
-        label="Confirmar senha"
-        name="confirmPassword"
-        autoComplete="new-password"
-        error={fieldErrors.confirmPassword}
-        disabled={submitting}
-      />
-
-      {formError && (
-        <p className="form-error" role="alert">
-          {formError}
-        </p>
-      )}
-
-      <button type="submit" className="roll-button auth-submit" disabled={submitting || disabledEnv}>
-        {submitting ? 'Criando conta…' : 'Criar conta'}
-      </button>
-
-      <div className="auth-divider">
-        <span>ou</span>
-      </div>
-
       <GoogleLoginButton
         onClick={handleGoogle}
         loading={googleLoading}
         disabled={disabledEnv}
         label="Cadastrar com Google"
       />
+
+      <div className="auth-divider">
+        <span>ou</span>
+      </div>
+
+      {showEmail ? (
+        <div className="auth-email-fields">
+          <Field
+            label="Nome de usuário"
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            error={fieldErrors.username}
+            disabled={submitting}
+          />
+
+          <Field
+            label={
+              <>
+                Nome de exibição <span className="field-optional">(opcional)</span>
+              </>
+            }
+            type="text"
+            name="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            error={fieldErrors.displayName}
+            disabled={submitting}
+          />
+
+          <Field
+            label="E-mail"
+            type="email"
+            name="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={fieldErrors.email}
+            disabled={submitting}
+          />
+
+          <PasswordField
+            label="Senha"
+            name="password"
+            autoComplete="new-password"
+            error={fieldErrors.password}
+            disabled={submitting}
+          />
+
+          <PasswordField
+            label="Confirmar senha"
+            name="confirmPassword"
+            autoComplete="new-password"
+            error={fieldErrors.confirmPassword}
+            disabled={submitting}
+          />
+
+          <button
+            type="submit"
+            className="roll-button auth-submit"
+            disabled={submitting || disabledEnv}
+          >
+            {submitting ? 'Criando conta…' : 'Criar conta'}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="ghost-button auth-submit"
+          onClick={() => setShowEmail(true)}
+          disabled={disabledEnv}
+        >
+          <Mail size={16} aria-hidden />
+          Criar conta com e-mail
+        </button>
+      )}
+
+      {formError && (
+        <p className="form-error" role="alert">
+          {formError}
+        </p>
+      )}
 
       <p className="auth-switch">
         Já tem conta? <Link to="/login">Entrar</Link>

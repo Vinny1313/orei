@@ -16,11 +16,11 @@ export function CampaignsUnavailable({ showBackLink = false }: CampaignsUnavaila
         <p>As campanhas exigem login com Supabase.</p>
         <small>
           Configure o <code>.env</code> para usar campanhas multi-jogador. O modo visitante
-          continua disponivel para personagens locais.
+          continua disponível para personagens locais.
         </small>
         {showBackLink && (
           <Link to="/campanhas" className="roll-button">
-            Voltar as campanhas
+            Voltar às campanhas
           </Link>
         )}
       </div>

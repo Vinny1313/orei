@@ -5,57 +5,66 @@
 //  - auth (PublicRoute): "/login", "/cadastro".
 //  - privadas (ProtectedRoute + AppLayout): "/agentes*", "/campanhas*", "/perfil".
 //
-// Os guards são pass-through na Fase 1 (ver ProtectedRoute/PublicRoute).
+// As páginas são carregadas sob demanda (React.lazy) → cada rota vira um chunk
+// separado, reduzindo o JS inicial. O FullPageLoader cobre o tempo de carga do chunk.
 
+import { Suspense, type ReactElement } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+import { FullPageLoader } from './components/layout/FullPageLoader'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { PublicRoute } from './components/layout/PublicRoute'
-import { CampaignDetailPage } from './pages/CampaignDetailPage'
-import { CampaignsPage } from './pages/CampaignsPage'
-import { CharacterSheetPage } from './pages/CharacterSheetPage'
-import { CharactersPage } from './pages/CharactersPage'
-import { HomePage } from './pages/HomePage'
-import { LoginPage } from './pages/LoginPage'
-import { NewCampaignPage } from './pages/NewCampaignPage'
-import { NewCharacterPage } from './pages/NewCharacterPage'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { RegisterPage } from './pages/RegisterPage'
+import {
+  CampaignDetailPage,
+  CampaignsPage,
+  CharacterSheetPage,
+  CharactersPage,
+  HomePage,
+  LoginPage,
+  NewCampaignPage,
+  NewCharacterPage,
+  NotFoundPage,
+  ProfilePage,
+  RegisterPage,
+} from './lazyPages'
+
+const withSuspense = (element: ReactElement): ReactElement => (
+  <Suspense fallback={<FullPageLoader />}>{element}</Suspense>
+)
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
+    element: withSuspense(<HomePage />),
   },
   {
     // Rotas públicas de autenticação.
     element: <PublicRoute />,
     children: [
-      { path: '/login', element: <LoginPage /> },
-      { path: '/cadastro', element: <RegisterPage /> },
+      { path: '/login', element: withSuspense(<LoginPage />) },
+      { path: '/cadastro', element: withSuspense(<RegisterPage />) },
     ],
   },
   {
-    // Rotas privadas: guard de auth (stub) + layout com navbar.
+    // Rotas privadas: guard de auth + layout com navbar.
     element: <ProtectedRoute />,
     children: [
       {
         element: <AppLayout />,
         children: [
-          { path: '/agentes', element: <CharactersPage /> },
-          { path: '/agentes/novo', element: <NewCharacterPage /> },
-          { path: '/agentes/:routeKey', element: <CharacterSheetPage /> },
-          { path: '/campanhas', element: <CampaignsPage /> },
-          { path: '/campanhas/nova', element: <NewCampaignPage /> },
-          { path: '/campanhas/:routeKey', element: <CampaignDetailPage /> },
-          { path: '/perfil', element: <ProfilePage /> },
+          { path: '/agentes', element: withSuspense(<CharactersPage />) },
+          { path: '/agentes/novo', element: withSuspense(<NewCharacterPage />) },
+          { path: '/agentes/:routeKey', element: withSuspense(<CharacterSheetPage />) },
+          { path: '/campanhas', element: withSuspense(<CampaignsPage />) },
+          { path: '/campanhas/nova', element: withSuspense(<NewCampaignPage />) },
+          { path: '/campanhas/:routeKey', element: withSuspense(<CampaignDetailPage />) },
+          { path: '/perfil', element: withSuspense(<ProfilePage />) },
         ],
       },
     ],
   },
   {
     path: '*',
-    element: <NotFoundPage />,
+    element: withSuspense(<NotFoundPage />),
   },
 ])

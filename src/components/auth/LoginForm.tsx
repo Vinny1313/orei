@@ -1,13 +1,15 @@
-// Formulário de login (e-mail/senha) + Google. Valida com zod, mostra erros por
-// campo e um erro geral do service, com estados de loading. Redireciona para a
-// origem (location.state.from) ou /agentes após sucesso.
+// Formulário de login. O fluxo principal é o Google (botão em destaque no topo);
+// e-mail/senha ficam recolhidos atrás de um toggle "Entrar com e-mail". Valida com
+// zod, mostra erros por campo e um erro geral do service, com estados de loading.
+// Redireciona para a origem (location.state.from) ou /agentes após sucesso.
 
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Mail } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { authMode } from '../../services/authService'
 import { signInSchema } from '../../utils/validators'
+import { Field } from '../ui/Field'
 import { GoogleLoginButton } from './GoogleLoginButton'
 import { PasswordField } from './PasswordField'
 
@@ -40,6 +42,7 @@ export function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [showEmail, setShowEmail] = useState(false)
 
   const disabledEnv = authMode === 'disabled'
   const redirectTo = resolveRedirect(location.state)
@@ -98,43 +101,58 @@ export function LoginForm() {
         </p>
       )}
 
-      <label>
-        E-mail
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          aria-invalid={!!fieldErrors.email}
-          disabled={submitting}
-        />
-        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
-      </label>
+      <GoogleLoginButton onClick={handleGoogle} loading={googleLoading} disabled={disabledEnv} />
 
-      <PasswordField
-        label="Senha"
-        name="password"
-        autoComplete="current-password"
-        error={fieldErrors.password}
-        disabled={submitting}
-      />
+      <div className="auth-divider">
+        <span>ou</span>
+      </div>
+
+      {showEmail ? (
+        <div className="auth-email-fields">
+          <Field
+            label="E-mail"
+            type="email"
+            name="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={fieldErrors.email}
+            disabled={submitting}
+          />
+
+          <PasswordField
+            label="Senha"
+            name="password"
+            autoComplete="current-password"
+            error={fieldErrors.password}
+            disabled={submitting}
+          />
+
+          <button
+            type="submit"
+            className="roll-button auth-submit"
+            disabled={submitting || disabledEnv}
+          >
+            {submitting ? 'Entrando…' : 'Entrar'}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="ghost-button auth-submit"
+          onClick={() => setShowEmail(true)}
+          disabled={disabledEnv}
+        >
+          <Mail size={16} aria-hidden />
+          Entrar com e-mail e senha
+        </button>
+      )}
 
       {formError && (
         <p className="form-error" role="alert">
           {formError}
         </p>
       )}
-
-      <button type="submit" className="roll-button auth-submit" disabled={submitting || disabledEnv}>
-        {submitting ? 'Entrando…' : 'Entrar'}
-      </button>
-
-      <div className="auth-divider">
-        <span>ou</span>
-      </div>
-
-      <GoogleLoginButton onClick={handleGoogle} loading={googleLoading} disabled={disabledEnv} />
 
       <p className="auth-switch">
         Ainda não tem conta? <Link to="/cadastro">Criar conta</Link>

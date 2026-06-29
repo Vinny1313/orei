@@ -3,11 +3,19 @@
 import { Crown, Swords, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Campaign, CampaignStatus } from '../../types/campaign'
+import { Badge } from '../ui/Badge'
+import type { BadgeTone } from '../ui/Badge'
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
   ativa: 'Ativa',
   pausada: 'Pausada',
   encerrada: 'Encerrada',
+}
+
+const STATUS_TONE: Record<CampaignStatus, BadgeTone> = {
+  ativa: 'success',
+  pausada: 'warning',
+  encerrada: 'danger',
 }
 
 export function CampaignCard({ campaign }: { campaign: Campaign }) {
@@ -17,9 +25,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
     <article className="campaign-card panel">
       <header className="character-card__head">
         <h3>{campaign.name}</h3>
-        <span className={`status-badge status-${campaign.status}`}>
-          {STATUS_LABEL[campaign.status]}
-        </span>
+        <Badge tone={STATUS_TONE[campaign.status]}>{STATUS_LABEL[campaign.status]}</Badge>
       </header>
 
       {campaign.description ? (

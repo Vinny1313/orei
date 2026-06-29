@@ -3,6 +3,7 @@
 import { ArrowLeft, Copy, DoorOpen, Pencil, ScrollText, Trash2, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { CampaignCharacters } from '../components/campaigns/CampaignCharacters'
 import { CampaignForm } from '../components/campaigns/CampaignForm'
 import type { CampaignFormValues } from '../components/campaigns/CampaignForm'
@@ -21,11 +22,28 @@ import {
   updateCampaign,
 } from '../services/campaignService'
 import type { CampaignCharacter, CampaignMember, CampaignStatus } from '../types/campaign'
+import { Badge } from '../components/ui/Badge'
+import type { BadgeTone } from '../components/ui/Badge'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
   ativa: 'Ativa',
   pausada: 'Pausada',
   encerrada: 'Encerrada',
+}
+
+const STATUS_TONE: Record<CampaignStatus, BadgeTone> = {
+  ativa: 'success',
+  pausada: 'warning',
+  encerrada: 'danger',
+}
+
+type PendingConfirm = {
+  title: string
+  description?: string
+  confirmLabel?: string
+  tone?: 'default' | 'danger'
+  action: () => void
 }
 
 export function CampaignDetailPage() {
@@ -54,6 +72,7 @@ function CampaignDetailPageContent() {
   const [selectedCharacter, setSelectedCharacter] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null)
 
   if (loading) {
     return (
@@ -67,10 +86,10 @@ function CampaignDetailPageContent() {
     return (
       <main className="page">
         <div className="empty-state large">
-          <p>{error ?? 'Campanha nao encontrada.'}</p>
+          <p>{error ?? 'Campanha não encontrada.'}</p>
           <Link to="/campanhas" className="roll-button">
             <ArrowLeft size={18} aria-hidden />
-            Voltar as campanhas
+            Voltar às campanhas
           </Link>
         </div>
       </main>
@@ -94,7 +113,7 @@ function CampaignDetailPageContent() {
         await reload()
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'A acao falhou.')
+      setActionError(err instanceof Error ? err.message : 'A ação falhou.')
     } finally {
       setActionBusy(false)
     }
@@ -108,7 +127,7 @@ function CampaignDetailPageContent() {
 
   const saveEdit = async () => {
     if (!editValues.name.trim()) {
-      setEditError('O nome e obrigatorio.')
+      setEditError('O nome é obrigatório.')
       return
     }
     setSavingEdit(true)
@@ -121,7 +140,7 @@ function CampaignDetailPageContent() {
       setEditing(false)
       await reload()
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : 'Nao foi possivel salvar.')
+      setEditError(err instanceof Error ? err.message : 'Não foi possível salvar.')
     } finally {
       setSavingEdit(false)
     }
@@ -129,6 +148,7 @@ function CampaignDetailPageContent() {
 
   const handleCopyCode = () => {
     void navigator.clipboard?.writeText(campaign.inviteCode)
+    toast.success('Código de convite copiado.')
   }
 
   const handleLink = () => {
@@ -150,27 +170,42 @@ function CampaignDetailPageContent() {
 
   const handleRemoveMember = (member: CampaignMember) => {
     const label = member.displayName || member.username || 'este jogador'
-    if (window.confirm(`Remover ${label} da campanha?`)) {
-      void runAction(() => removeMember(campaign.id, member.userId))
-    }
+    setPendingConfirm({
+      title: 'Remover jogador?',
+      description: `${label} será removido da campanha.`,
+      confirmLabel: 'Remover',
+      tone: 'danger',
+      action: () => void runAction(() => removeMember(campaign.id, member.userId)),
+    })
   }
 
   const handleLeave = () => {
-    if (window.confirm('Sair desta campanha?')) {
-      void runAction(() => leaveCampaign(campaign.id), () => navigate('/campanhas'))
-    }
+    setPendingConfirm({
+      title: 'Sair da campanha?',
+      description: 'Você deixará de participar desta campanha.',
+      confirmLabel: 'Sair',
+      tone: 'danger',
+      action: () => void runAction(() => leaveCampaign(campaign.id), () => navigate('/campanhas')),
+    })
   }
 
   const handleClose = () => {
-    if (window.confirm('Encerrar a campanha? Ela ficara marcada como encerrada.')) {
-      void runAction(() => updateCampaign(campaign.id, { status: 'encerrada' }))
-    }
+    setPendingConfirm({
+      title: 'Encerrar campanha?',
+      description: 'Ela ficará marcada como encerrada.',
+      confirmLabel: 'Encerrar',
+      action: () => void runAction(() => updateCampaign(campaign.id, { status: 'encerrada' })),
+    })
   }
 
   const handleDelete = () => {
-    if (window.confirm('Excluir a campanha permanentemente? Esta acao nao pode ser desfeita.')) {
-      void runAction(() => deleteCampaign(campaign.id), () => navigate('/campanhas'))
-    }
+    setPendingConfirm({
+      title: 'Excluir campanha?',
+      description: 'A campanha será removida permanentemente. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      tone: 'danger',
+      action: () => void runAction(() => deleteCampaign(campaign.id), () => navigate('/campanhas')),
+    })
   }
 
   return (
@@ -179,11 +214,11 @@ function CampaignDetailPageContent() {
         <div>
           <Link to="/campanhas" className="back-link">
             <ArrowLeft size={16} aria-hidden />
-            Voltar as campanhas
+            Voltar às campanhas
           </Link>
           <h1>{campaign.name}</h1>
         </div>
-        <span className={`status-badge status-${campaign.status}`}>{STATUS_LABEL[campaign.status]}</span>
+        <Badge tone={STATUS_TONE[campaign.status]}>{STATUS_LABEL[campaign.status]}</Badge>
       </header>
 
       {actionError && <p className="form-error">{actionError}</p>}
@@ -203,14 +238,14 @@ function CampaignDetailPageContent() {
           {campaign.description ? (
             <p>{campaign.description}</p>
           ) : (
-            <p className="muted-note">Sem descricao.</p>
+            <p className="muted-note">Sem descrição.</p>
           )}
 
           {isMaster && (
             <div className="invite-box">
-              <span>Codigo de convite</span>
+              <span>Código de convite</span>
               <code>{campaign.inviteCode}</code>
-              <button type="button" className="icon-button small" title="Copiar codigo" onClick={handleCopyCode}>
+              <button type="button" className="icon-button small" title="Copiar código" onClick={handleCopyCode}>
                 <Copy size={15} aria-hidden />
               </button>
             </div>
@@ -281,7 +316,7 @@ function CampaignDetailPageContent() {
                   {loadingMyCharacters
                     ? 'Carregando personagens...'
                     : myCharactersError
-                      ? 'Nao foi possivel carregar personagens'
+                      ? 'Não foi possível carregar personagens'
                       : 'Vincular meu personagem...'}
                 </option>
                 {linkableCharacters.map((character) => (
@@ -302,6 +337,19 @@ function CampaignDetailPageContent() {
           </div>
         )}
       </section>
+
+      <ConfirmDialog
+        open={pendingConfirm !== null}
+        title={pendingConfirm?.title ?? ''}
+        description={pendingConfirm?.description}
+        confirmLabel={pendingConfirm?.confirmLabel}
+        tone={pendingConfirm?.tone}
+        onConfirm={() => {
+          pendingConfirm?.action()
+          setPendingConfirm(null)
+        }}
+        onCancel={() => setPendingConfirm(null)}
+      />
     </main>
   )
 }

@@ -2777,7 +2777,6 @@ a.linked-row:hover {
 
 .hero-gradient {
   transform: translate3d(calc(var(--mx) * -7px), calc(var(--my) * -7px), 0) scale(1.06);
-  will-change: transform;
 }
 
 .hero-rays {
@@ -2802,6 +2801,9 @@ a.linked-row:hover {
 .hero-background {
   z-index: -1;
   overflow: hidden;
+  /* Camada puramente decorativa: isola paint/layout para o browser nao reavaliar
+     fora dela a cada invalidacao das animacoes de fundo. */
+  contain: layout paint;
 }
 
 .hero-gradient {
@@ -2841,12 +2843,11 @@ a.linked-row:hover {
 .hero-fog {
   z-index: 4;
   overflow: hidden;
-  /* Blur baixo: os gradientes dos veus/bancos ja sao suaves, entao o custo de
-     re-borrar conteudo em movimento (filhos animados) cai muito sem perder a
-     leitura de "nevoa". */
-  filter: blur(9px);
+  /* Sem filter: blur — ele re-borrava a tela inteira a cada frame (os filhos
+     animam continuamente). Os gradientes dos veus/bancos ja sao suaves o
+     suficiente para ler como "nevoa"; os stops abaixo foram alargados para
+     compensar. Os filhos animam como composicao pura (will-change neles). */
   opacity: var(--fog-intensity);
-  will-change: transform;
 }
 
 .hero-fog__veil {
@@ -2856,8 +2857,8 @@ a.linked-row:hover {
   /* Tom frio e sombrio (cinza-azulado), sem calor. Stops levemente mais largos
      para compensar o blur menor do container. */
   background:
-    radial-gradient(ellipse at 18% 62%, rgba(174, 188, 202, 0.3), transparent 46%),
-    radial-gradient(ellipse at 78% 50%, rgba(136, 146, 162, 0.22), transparent 50%),
+    radial-gradient(ellipse at 18% 62%, rgba(174, 188, 202, 0.3), transparent 56%),
+    radial-gradient(ellipse at 78% 50%, rgba(136, 146, 162, 0.22), transparent 60%),
     linear-gradient(90deg, transparent, rgba(154, 168, 184, 0.2), transparent);
   animation: hero-fog-veil calc(26s * var(--fog-speed)) ease-in-out infinite alternate;
   will-change: transform, opacity;
@@ -2867,8 +2868,8 @@ a.linked-row:hover {
   inset: 20% -20% -18%;
   opacity: 0.3;
   background:
-    radial-gradient(ellipse at 34% 78%, rgba(178, 190, 202, 0.28), transparent 44%),
-    radial-gradient(ellipse at 68% 64%, rgba(96, 104, 120, 0.2), transparent 46%),
+    radial-gradient(ellipse at 34% 78%, rgba(178, 190, 202, 0.28), transparent 54%),
+    radial-gradient(ellipse at 68% 64%, rgba(96, 104, 120, 0.2), transparent 56%),
     linear-gradient(90deg, transparent, rgba(160, 172, 188, 0.18), transparent);
   animation-duration: calc(36s * var(--fog-speed));
   animation-direction: alternate-reverse;
@@ -2881,8 +2882,8 @@ a.linked-row:hover {
   border-radius: 999px;
   opacity: 0.6;
   background:
-    radial-gradient(ellipse at 25% 50%, rgba(176, 188, 200, 0.32), transparent 56%),
-    radial-gradient(ellipse at 72% 48%, rgba(96, 56, 64, 0.16), transparent 60%),
+    radial-gradient(ellipse at 25% 50%, rgba(176, 188, 200, 0.32), transparent 64%),
+    radial-gradient(ellipse at 72% 48%, rgba(96, 56, 64, 0.16), transparent 68%),
     linear-gradient(90deg, transparent, rgba(150, 162, 178, 0.28), transparent);
   transform: translate3d(0, 0, 0);
   animation: hero-fog-drift calc(34s * var(--fog-speed)) ease-in-out infinite alternate;
@@ -3002,6 +3003,7 @@ a.linked-row:hover {
   margin-bottom: 14px;
   color: rgba(213, 164, 79, 0.84);
   text-shadow: 0 0 18px rgba(213, 164, 79, 0.24);
+  animation: hero-rise-text 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
 }
 
 .hero-content__title {
@@ -3015,6 +3017,7 @@ a.linked-row:hover {
     0 2px 0 rgba(0, 0, 0, 0.42),
     0 0 38px rgba(213, 164, 79, var(--gold-glow)),
     0 24px 72px rgba(0, 0, 0, 0.78);
+  animation: hero-rise-title 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both;
 }
 
 /* Sheen metalico: brilho claro varrendo o titulo, preservando leitura.
@@ -3036,9 +3039,11 @@ a.linked-row:hover {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    /* Brilho varre o titulo na entrada (2x) e assenta na cor base — sem repaint
-       continuo do elemento LCP em regime permanente. */
-    animation: hero-title-sheen 6s ease-in-out 0.6s 2;
+    /* Entrada (rise) + brilho que varre o titulo apos a entrada (2x) e assenta na
+       cor base — sem repaint continuo do elemento LCP em regime permanente. */
+    animation:
+      hero-rise-title 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both,
+      hero-title-sheen 6s ease-in-out 0.9s 2;
   }
 
   /* O brasao tem cor propria — nao herdar o clip transparente. */
@@ -3091,10 +3096,12 @@ a.linked-row:hover {
   color: rgba(231, 221, 200, 0.88);
   font-size: clamp(1.02rem, 2vw, 1.24rem);
   text-shadow: 0 12px 34px rgba(0, 0, 0, 0.72);
+  animation: hero-rise-text 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
 }
 
 .hero-content__actions {
   align-items: center;
+  animation: hero-rise-actions 0.62s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
 .hero-cta {
@@ -3106,7 +3113,8 @@ a.linked-row:hover {
     border-color 180ms ease,
     box-shadow 180ms ease,
     background 180ms ease,
-    color 180ms ease;
+    color 180ms ease,
+    transform 180ms ease;
 }
 
 .hero-cta::before {
@@ -3123,10 +3131,15 @@ a.linked-row:hover {
 
 .hero-cta:hover,
 .hero-cta:focus-visible {
+  transform: translateY(-2px) scale(1.02);
   box-shadow:
     0 0 0 1px rgba(255, 211, 110, calc(var(--gold-glow) + 0.12)),
     0 0 34px rgba(213, 164, 79, calc(var(--gold-glow) + 0.04)),
     0 22px 52px rgba(0, 0, 0, 0.42);
+}
+
+.hero-cta:active {
+  transform: scale(0.98);
 }
 
 .hero-cta:hover::before,
@@ -3181,6 +3194,43 @@ a.linked-row:hover {
   to {
     opacity: 0.62;
     transform: translate3d(4%, 0, 0) rotate(17deg);
+  }
+}
+
+/* Entrada cinematografica (antes via framer-motion). Só transform/opacity. */
+@keyframes hero-rise-title {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-rise-text {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-rise-actions {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -3242,8 +3292,27 @@ a.linked-row:hover {
     --fog-intensity: 0.6;
   }
 
-  .hero-fog {
-    filter: blur(7px);
+  /* Mobile: menos camadas sobrepostas (imperceptivel na tela pequena) e sem
+     animacao continua nos feixes — alivia raster/composicao no celular. */
+  .hero-fog__veil--low,
+  .hero-fog__bank--far,
+  .hero-fog__bank--mid,
+  .hero-rays__beam--b {
+    display: none;
+  }
+
+  .hero-rays__beam {
+    animation: none;
+  }
+
+  /* Parallax e desativado no mobile (ver StormCanvas), entao essas camadas nao
+     transformam — nao precisam reservar camada de GPU. */
+  .hero-gradient,
+  .hero-horizon,
+  .hero-rays,
+  .hero-fog__veil,
+  .hero-fog__bank {
+    will-change: auto;
   }
 }
 
@@ -3253,13 +3322,22 @@ a.linked-row:hover {
   .hero-rays__beam,
   .hero-content__title,
   .hero-content__sigil,
-  .hero-content__sigil::after {
+  .hero-content__sigil::after,
+  .hero-content__eyebrow,
+  .hero-content__lead,
+  .hero-content__actions {
     animation: none;
   }
 
   .hero-cta,
   .hero-cta::before {
     transition: none;
+  }
+
+  .hero-cta:hover,
+  .hero-cta:focus-visible,
+  .hero-cta:active {
+    transform: none;
   }
 
   /* StormCanvas ja nao anima com reduced-motion (so renderiza vazio). */

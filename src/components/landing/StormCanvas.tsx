@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 
 // ───────────────── Knobs da tempestade (canvas) ─────────────────
 // Ajuste fino de chuva, vento, cinzas e relampagos num lugar so.
 const RAIN_COUNT = 220 // densidade da chuva (desktop)
-const RAIN_COUNT_MOBILE = 90 // densidade no mobile
+const RAIN_COUNT_MOBILE = 60 // densidade no mobile
 const RAIN_SPEED = 1 // multiplicador de velocidade da chuva
 const RAIN_ANGLE = 0.26 // inclinacao base em rad (~15deg)
 const WIND = 0.16 // amplitude da oscilacao de vento (rad)
@@ -25,7 +25,7 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a)
 
 export function StormCanvas() {
   const ref = useRef<HTMLCanvasElement>(null)
-  const reduce = useReducedMotion()
+  const reduce = usePrefersReducedMotion()
 
   useEffect(() => {
     if (reduce) return
@@ -36,8 +36,25 @@ export function StormCanvas() {
 
     const parent = canvas.parentElement as HTMLElement | null
     const isMobile = window.matchMedia('(max-width: 760px)').matches
-    const rainCount = isMobile ? RAIN_COUNT_MOBILE : RAIN_COUNT
-    const ashCount = isMobile ? Math.round(ASH_COUNT / 2) : ASH_COUNT
+
+    // Aparelho fraco (so consideramos no mobile, para nao degradar o desktop):
+    // pouca memoria, poucos nucleos ou modo economia de dados → preset "lite".
+    const nav = navigator as Navigator & {
+      deviceMemory?: number
+      connection?: { saveData?: boolean }
+    }
+    const lowPower =
+      isMobile &&
+      ((nav.deviceMemory !== undefined && nav.deviceMemory <= 4) ||
+        (nav.hardwareConcurrency !== undefined && nav.hardwareConcurrency <= 4) ||
+        nav.connection?.saveData === true)
+
+    const rainCount = lowPower ? 40 : isMobile ? RAIN_COUNT_MOBILE : RAIN_COUNT
+    const ashCount = lowPower ? 0 : isMobile ? Math.round(ASH_COUNT / 2) : ASH_COUNT
+
+    // Cap de framerate: 30fps (24 no lite) é visualmente identico para chuva/cinza
+    // e corta ~metade do trabalho de raster/upload de textura por segundo.
+    const frameInterval = 1000 / (lowPower ? 24 : 30)
 
     let w = 0
     let h = 0
@@ -67,7 +84,7 @@ export function StormCanvas() {
     })
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+      const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5)
       w = canvas.clientWidth
       h = canvas.clientHeight
       canvas.width = Math.round(w * dpr)
@@ -152,8 +169,11 @@ export function StormCanvas() {
     let last = performance.now()
 
     const frame = (now: number) => {
-      const dt = Math.min((now - last) / 16.67, 2.5)
+      raf = requestAnimationFrame(frame)
+      const elapsed = now - last
+      if (elapsed < frameInterval) return // respeita o cap de fps
       last = now
+      const dt = Math.min(elapsed / 16.67, 2.5)
       ctx.clearRect(0, 0, w, h)
 
       // Parallax suave — so escreve as CSS vars quando mudam de verdade, para
@@ -245,8 +265,6 @@ export function StormCanvas() {
         ctx.fillRect(0, 0, w, h)
         flash *= Math.pow(0.85, dt)
       }
-
-      raf = requestAnimationFrame(frame)
     }
 
     // Pausa o loop quando a aba fica oculta (libera main-thread/compositor) e

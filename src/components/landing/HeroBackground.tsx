@@ -1,3 +1,31 @@
+// Atmosfera cinematografica da landing — tempestade medieval dark fantasy.
+// Camadas decorativas (aria-hidden + pointer-events:none). Chuva, cinzas e
+// relampagos rodam num <canvas> leve (StormCanvas); nevoa/horizonte/vinheta
+// sao CSS. Knobs de chuva/raio em StormCanvas.tsx; nevoa/vinheta/brilho em
+// App.css (variaveis em `.landing`).
+import { StormCanvas } from './StormCanvas'
+
+// Horizonte difuso: profundidade no rodape sem nenhuma forma reconhecivel.
+function HorizonLayer() {
+  return (
+    <div className="hero-horizon" aria-hidden>
+      <span className="hero-horizon__haze" />
+      <span className="hero-horizon__base" />
+    </div>
+  )
+}
+
+// Feixes de luar sutis atravessando a tempestade (atmosfera, sem poluir).
+function RaysLayer() {
+  return (
+    <div className="hero-rays" aria-hidden>
+      <span className="hero-rays__beam hero-rays__beam--a" />
+      <span className="hero-rays__beam hero-rays__beam--b" />
+    </div>
+  )
+}
+
+// Nevoa densa e fria em camadas com deriva lenta.
 function FogLayer() {
   return (
     <div className="hero-fog" aria-hidden>
@@ -10,47 +38,15 @@ function FogLayer() {
   )
 }
 
-function RainLayer() {
-  return (
-    <div className="hero-rain" aria-hidden>
-      <span className="hero-rain__sheet hero-rain__sheet--front" />
-      <span className="hero-rain__sheet hero-rain__sheet--mid" />
-      <span className="hero-rain__sheet hero-rain__sheet--back" />
-    </div>
-  )
-}
-
-function LightningLayer() {
-  return (
-    <div className="hero-lightning" aria-hidden>
-      <span className="hero-lightning__flash hero-lightning__flash--left" />
-      <span className="hero-lightning__flash hero-lightning__flash--right" />
-      <span className="hero-lightning__vein hero-lightning__vein--left" />
-      <span className="hero-lightning__vein hero-lightning__vein--right" />
-    </div>
-  )
-}
-
-function StormKeepLayer() {
-  return (
-    <div className="hero-keep" aria-hidden>
-      <span className="hero-keep__tower hero-keep__tower--left" />
-      <span className="hero-keep__tower hero-keep__tower--right" />
-      <span className="hero-keep__arch" />
-      <span className="hero-keep__ridge" />
-    </div>
-  )
-}
-
 export function HeroBackground() {
   return (
     <div className="hero-background" aria-hidden>
       <div className="hero-gradient" />
       <div className="hero-noise" />
-      <StormKeepLayer />
-      <RainLayer />
+      <HorizonLayer />
+      <RaysLayer />
       <FogLayer />
-      <LightningLayer />
+      <StormCanvas />
       <div className="hero-vignette" />
     </div>
   )

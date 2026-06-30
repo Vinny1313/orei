@@ -46,8 +46,9 @@
 
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(142, 22, 36, 0.24), transparent 34rem),
-    linear-gradient(180deg, #111318 0%, #171217 48%, #0f1115 100%);
+    radial-gradient(circle at top left, rgba(120, 24, 38, 0.14), transparent 36rem),
+    radial-gradient(circle at 88% 6%, rgba(70, 84, 112, 0.08), transparent 30rem),
+    linear-gradient(180deg, #101218 0%, #141118 48%, #0e1014 100%);
   font-family: var(--font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;

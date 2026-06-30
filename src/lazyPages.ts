@@ -31,6 +31,11 @@ export const NewCampaignPage = lazy(() =>
 export const CampaignDetailPage = lazy(() =>
   import('./pages/CampaignDetailPage').then((mod) => ({ default: mod.CampaignDetailPage })),
 )
+export const CampaignCharacterViewPage = lazy(() =>
+  import('./pages/CampaignCharacterViewPage').then((mod) => ({
+    default: mod.CampaignCharacterViewPage,
+  })),
+)
 export const ProfilePage = lazy(() =>
   import('./pages/ProfilePage').then((mod) => ({ default: mod.ProfilePage })),
 )

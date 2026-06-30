@@ -264,41 +264,55 @@ export const listMembers = async (campaignId: string): Promise<CampaignMember[]>
   })
 }
 
-type CampaignCharacterRow = {
-  id: string
-  campaign_id: string
+// Linha devolvida pela RPC campaign_roster (SECURITY DEFINER): identidade leve de
+// todos os vínculos da campanha; route_key só vem quando o usuário pode abrir a ficha.
+type RosterRow = {
+  link_id: string
   character_id: string
-  user_id: string
+  owner_id: string
+  shared: boolean
+  name: string | null
+  class_name: string | null
+  level: number | null
+  route_key: string | null
   created_at: string
-  character?: {
-    id: string
-    sheet: { identity?: { characterName?: string; className?: string; level?: number } }
-  } | null
 }
 
 export const listCampaignCharacters = async (
   campaignId: string,
 ): Promise<CampaignCharacter[]> => {
   const client = requireClient()
-  const { data, error } = await client
-    .from('campaign_characters')
-    .select('*, character:characters(id, sheet)')
-    .eq('campaign_id', campaignId)
-    .order('created_at', { ascending: true })
+  // RPC em vez de join direto: a RLS de characters bloqueia fichas privadas alheias,
+  // então um join devolveria nomes vazios. A RPC mostra o roster (nome/classe/nível)
+  // a todos os membros e só revela a route_key (porta da ficha) a quem tem permissão.
+  const { data, error } = await client.rpc('campaign_roster', { p_campaign: campaignId })
   if (error) throw new Error(error.message)
-  return ((data ?? []) as CampaignCharacterRow[]).map((cc) => {
-    const identity = cc.character?.sheet?.identity
-    return {
-      id: cc.id,
-      campaignId: cc.campaign_id,
-      characterId: cc.character_id,
-      userId: cc.user_id,
-      createdAt: cc.created_at,
-      characterName: identity?.characterName,
-      className: identity?.className,
-      level: identity?.level,
-    }
-  })
+  return ((data ?? []) as RosterRow[]).map((cc) => ({
+    id: cc.link_id,
+    campaignId,
+    characterId: cc.character_id,
+    userId: cc.owner_id,
+    createdAt: cc.created_at,
+    characterName: cc.name ?? undefined,
+    className: cc.class_name ?? undefined,
+    level: cc.level ?? undefined,
+    shared: cc.shared,
+    routeKey: cc.route_key,
+  }))
+}
+
+/** Dono alterna a visibilidade da própria ficha nesta campanha (a RLS valida a posse). */
+export const setCharacterShared = async (
+  campaignCharacterId: string,
+  shared: boolean,
+): Promise<void> => {
+  const client = requireClient()
+  const { count, error } = await client
+    .from('campaign_characters')
+    .update({ shared }, { count: 'exact' })
+    .eq('id', campaignCharacterId)
+  if (error) throw new Error(error.message)
+  assertDeleted(count, 'Personagem nao encontrado ou sem permissao para alterar visibilidade.')
 }
 
 /** Jogador vincula um personagem PRÓPRIO (a RLS valida a posse). */

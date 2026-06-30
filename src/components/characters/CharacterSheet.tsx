@@ -50,6 +50,13 @@ const ROLL_HISTORY_LIMIT = 50
 type CharacterSheetProps = {
   initialSheet: CharacterSheetType
   onSave: (sheet: CharacterSheetType) => Promise<unknown>
+  /** Modo somente-leitura (ver ficha alheia dentro da campanha): sem autosave,
+   *  sem toolbar de ações e com todos os campos desabilitados. */
+  readOnly?: boolean
+  /** Cabeçalho/voltar customizados no modo leitura (ex.: voltar à campanha). */
+  backTo?: { to: string; label: string }
+  /** Título exibido no topo (default "Ficha"). */
+  title?: string
 }
 
 type TabDefinition = {
@@ -68,7 +75,13 @@ const TABS: TabDefinition[] = [
 const formulaForBonus = (bonus = 0): string =>
   `d20${bonus ? (bonus > 0 ? `+${bonus}` : `${bonus}`) : ''}`
 
-export function CharacterSheet({ initialSheet, onSave }: CharacterSheetProps) {
+export function CharacterSheet({
+  initialSheet,
+  onSave,
+  readOnly = false,
+  backTo,
+  title = 'Ficha',
+}: CharacterSheetProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [sheet, setSheet] = useState<CharacterSheetType>(initialSheet)
   const [activeTab, setActiveTab] = useState<SheetTab>('principal')
@@ -94,6 +107,7 @@ export function CharacterSheet({ initialSheet, onSave }: CharacterSheetProps) {
   )
 
   useEffect(() => {
+    if (readOnly) return
     if (skipNextAutosave.current) {
       skipNextAutosave.current = false
       return
@@ -102,7 +116,7 @@ export function CharacterSheet({ initialSheet, onSave }: CharacterSheetProps) {
       void persist(sheet)
     }, AUTOSAVE_DELAY)
     return () => window.clearTimeout(handle)
-  }, [sheet, persist])
+  }, [sheet, persist, readOnly])
 
   useEffect(() => {
     if (!toastRoll) return
@@ -307,48 +321,56 @@ export function CharacterSheet({ initialSheet, onSave }: CharacterSheetProps) {
     <>
       <header className="topbar character-topbar">
         <div>
-          <Link to="/agentes" className="back-link">
+          <Link to={backTo?.to ?? '/agentes'} className="back-link">
             <ArrowLeft size={16} aria-hidden />
-            Voltar aos agentes
+            {backTo?.label ?? 'Voltar aos agentes'}
           </Link>
-          <h1>Ficha</h1>
+          <h1>{title}</h1>
         </div>
-        <div className="toolbar">
-          <span className="autosave">
-            <Save size={16} aria-hidden />
-            {saving ? 'Salvando...' : `Salvo ${savedAt}`}
-          </span>
-          <button type="button" className="ghost-button" onClick={() => setHistoryOpen(true)}>
-            <History size={16} aria-hidden />
-            Historico
-          </button>
-          <button type="button" className="dry-d20-button" onClick={() => rollDice('d20 seco', 0, 'generic')}>
-            <Dice5 size={18} aria-hidden />
-            d20 seco
-          </button>
-          <button type="button" className="save-button" onClick={saveNow} title="Salvar agora">
-            <Save size={16} aria-hidden />
-            Salvar
-          </button>
-          <button type="button" className="icon-button" onClick={exportSheet} title="Exportar JSON">
-            <Download size={18} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            onClick={() => fileInputRef.current?.click()}
-            title="Importar JSON"
-          >
-            <Upload size={18} aria-hidden />
-          </button>
-          <button type="button" className="icon-button danger" onClick={resetSheet} title="Restaurar padrao">
-            <RotateCcw size={18} aria-hidden />
-          </button>
-          <input ref={fileInputRef} className="sr-only" type="file" accept="application/json" onChange={importSheet} />
-        </div>
+        {readOnly ? (
+          <div className="toolbar">
+            <span className="badge badge--gold">Somente leitura</span>
+          </div>
+        ) : (
+          <div className="toolbar">
+            <span className="autosave">
+              <Save size={16} aria-hidden />
+              {saving ? 'Salvando...' : `Salvo ${savedAt}`}
+            </span>
+            <button type="button" className="ghost-button" onClick={() => setHistoryOpen(true)}>
+              <History size={16} aria-hidden />
+              Historico
+            </button>
+            <button type="button" className="dry-d20-button" onClick={() => rollDice('d20 seco', 0, 'generic')}>
+              <Dice5 size={18} aria-hidden />
+              d20 seco
+            </button>
+            <button type="button" className="save-button" onClick={saveNow} title="Salvar agora">
+              <Save size={16} aria-hidden />
+              Salvar
+            </button>
+            <button type="button" className="icon-button" onClick={exportSheet} title="Exportar JSON">
+              <Download size={18} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Importar JSON"
+            >
+              <Upload size={18} aria-hidden />
+            </button>
+            <button type="button" className="icon-button danger" onClick={resetSheet} title="Restaurar padrao">
+              <RotateCcw size={18} aria-hidden />
+            </button>
+            <input ref={fileInputRef} className="sr-only" type="file" accept="application/json" onChange={importSheet} />
+          </div>
+        )}
       </header>
 
-      <CharacterIdentityHeader sheet={sheet} updateIdentity={updateIdentity} />
+      <fieldset className="sheet-fieldset" disabled={readOnly}>
+        <CharacterIdentityHeader sheet={sheet} updateIdentity={updateIdentity} />
+      </fieldset>
 
       <nav className="sheet-tabs" aria-label="Abas da ficha">
         {TABS.map(({ id, label, Icon }) => (
@@ -364,6 +386,7 @@ export function CharacterSheet({ initialSheet, onSave }: CharacterSheetProps) {
         ))}
       </nav>
 
+      <fieldset className="sheet-fieldset" disabled={readOnly}>
       <section className="sheet-workspace">
         <div className="sheet-main-panel">
           {activeTab === 'principal' && (
@@ -413,6 +436,7 @@ export function CharacterSheet({ initialSheet, onSave }: CharacterSheetProps) {
           setNotes={(value) => setSheet((current) => ({ ...current, notes: value }))}
         />
       </section>
+      </fieldset>
 
       <RollHistoryDrawer
         open={historyOpen}

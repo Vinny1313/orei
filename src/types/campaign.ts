@@ -37,12 +37,18 @@ export type CampaignCharacter = {
   id: string
   campaignId: string
   characterId: string
+  /** Dono do personagem vinculado (= quem criou o vínculo). */
   userId: string
   createdAt: string
   /** Resumo do personagem vinculado (derivado do sheet), quando carregado. */
   characterName?: string
   className?: string
   level?: number
+  /** Dono liberou a ficha para os demais membros desta campanha verem. */
+  shared: boolean
+  /** route_key da ficha — só vem quando o usuário tem permissão de abrir
+   *  (dono, compartilhado ou mestre). Sem ela, a ficha fica privada. */
+  routeKey?: string | null
 }
 
 /** Entrada do formulário de criação de campanha. */

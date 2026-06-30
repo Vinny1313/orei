@@ -22,10 +22,17 @@ type CharacterRow = {
 const mapRow = (row: CharacterRow): Character => ({
   id: row.id,
   routeKey: row.route_key ?? row.id,
+  ownerId: row.owner_id,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   sheet: normalizeSheet(row.sheet),
 })
+
+/** id do usuário autenticado (para filtrar o dashboard só pelos próprios). */
+const currentUserId = async (supabase: SupabaseClient): Promise<string | null> => {
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user.id ?? null
+}
 
 const isMissingRouteKeyError = (error: { message?: string; code?: string } | null): boolean =>
   error?.code === '42703' || error?.message?.includes('route_key') === true
@@ -37,10 +44,13 @@ const isUuid = (value: string): boolean =>
 
 export const createSupabaseCharacterStore = (supabase: SupabaseClient): CharacterStore => ({
   list: async () => {
-    const { data, error } = await supabase
-      .from('characters')
-      .select('*')
-      .order('updated_at', { ascending: false })
+    // O dashboard /agentes mostra SOMENTE os personagens do próprio dono. Filtramos
+    // explicitamente por owner_id: a RLS pode liberar fichas alheias para leitura
+    // (mestre / compartilhadas em campanha), mas elas nunca devem entrar nesta lista.
+    const me = await currentUserId(supabase)
+    let query = supabase.from('characters').select('*').order('updated_at', { ascending: false })
+    if (me) query = query.eq('owner_id', me)
+    const { data, error } = await query
     if (error) throw new Error(error.message)
     return ((data ?? []) as CharacterRow[]).map(mapRow)
   },

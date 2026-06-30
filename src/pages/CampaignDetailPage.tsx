@@ -18,6 +18,7 @@ import {
   leaveCampaign,
   linkCharacter,
   removeMember,
+  setCharacterShared,
   unlinkCharacter,
   updateCampaign,
 } from '../services/campaignService'
@@ -168,6 +169,10 @@ function CampaignDetailPageContent() {
     void runAction(() => unlinkCharacter(link.id))
   }
 
+  const handleToggleShare = (link: CampaignCharacter, shared: boolean) => {
+    void runAction(() => setCharacterShared(link.id, shared))
+  }
+
   const handleRemoveMember = (member: CampaignMember) => {
     const label = member.displayName || member.username || 'este jogador'
     setPendingConfirm({
@@ -301,8 +306,10 @@ function CampaignDetailPageContent() {
           characters={characters}
           isMaster={isMaster}
           currentUserId={user?.id}
+          campaignRouteKey={campaign.routeKey}
           disabled={actionBusy}
           onUnlink={handleUnlink}
+          onToggleShare={handleToggleShare}
         />
         {!closed && (
           <div className="link-character">

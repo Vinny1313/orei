@@ -15,6 +15,7 @@ import { FullPageLoader } from './components/layout/FullPageLoader'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { PublicRoute } from './components/layout/PublicRoute'
 import {
+  CampaignCharacterViewPage,
   CampaignDetailPage,
   CampaignsPage,
   CharacterSheetPage,
@@ -58,6 +59,10 @@ export const router = createBrowserRouter([
           { path: '/campanhas', element: withSuspense(<CampaignsPage />) },
           { path: '/campanhas/nova', element: withSuspense(<NewCampaignPage />) },
           { path: '/campanhas/:routeKey', element: withSuspense(<CampaignDetailPage />) },
+          {
+            path: '/campanhas/:routeKey/ficha/:characterRouteKey',
+            element: withSuspense(<CampaignCharacterViewPage />),
+          },
           { path: '/perfil', element: withSuspense(<ProfilePage />) },
         ],
       },

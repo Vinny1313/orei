@@ -9,26 +9,26 @@ const contentVariants: Variants = {
   show: {
     opacity: 1,
     transition: {
-      delayChildren: 0.18,
-      staggerChildren: 0.16,
+      delayChildren: 0.06,
+      staggerChildren: 0.08,
     },
   },
 }
 
+// Entrada anima apenas transform + opacity (composite-friendly). Animar
+// filter: blur repintava cada frame e atrasava a pintura nitida do titulo (LCP).
 const titleVariants: Variants = {
   hidden: {
     opacity: 0,
-    filter: 'blur(14px)',
     scale: 0.96,
     y: 18,
   },
   show: {
     opacity: 1,
-    filter: 'blur(0px)',
     scale: 1,
     y: 0,
     transition: {
-      duration: 0.9,
+      duration: 0.6,
       ease: cinematicEase,
     },
   },
@@ -37,12 +37,10 @@ const titleVariants: Variants = {
 const textVariants: Variants = {
   hidden: {
     opacity: 0,
-    filter: 'blur(8px)',
     y: 14,
   },
   show: {
     opacity: 1,
-    filter: 'blur(0px)',
     y: 0,
     transition: {
       duration: 0.7,

@@ -2777,6 +2777,7 @@ a.linked-row:hover {
 
 .hero-gradient {
   transform: translate3d(calc(var(--mx) * -7px), calc(var(--my) * -7px), 0) scale(1.06);
+  will-change: transform;
 }
 
 .hero-rays {
@@ -2815,8 +2816,9 @@ a.linked-row:hover {
 }
 
 .hero-noise {
-  opacity: 0.16;
-  mix-blend-mode: soft-light;
+  /* Grao estatico: sem mix-blend-mode (soft-light forcava composicao nao
+     isolada). Blend normal com opacidade baixa fica visualmente quase igual. */
+  opacity: 0.11;
   /* Grao fino e direcional — sem pontos brilhantes (nada de "estrelas"). */
   background-image:
     repeating-linear-gradient(112deg, rgba(255, 245, 223, 0.02) 0 1px, transparent 1px 4px),
@@ -2839,20 +2841,26 @@ a.linked-row:hover {
 .hero-fog {
   z-index: 4;
   overflow: hidden;
-  filter: blur(22px);
+  /* Blur baixo: os gradientes dos veus/bancos ja sao suaves, entao o custo de
+     re-borrar conteudo em movimento (filhos animados) cai muito sem perder a
+     leitura de "nevoa". */
+  filter: blur(9px);
   opacity: var(--fog-intensity);
+  will-change: transform;
 }
 
 .hero-fog__veil {
   position: absolute;
   inset: -12% -18%;
   opacity: 0.52;
-  /* Tom frio e sombrio (cinza-azulado), sem calor. */
+  /* Tom frio e sombrio (cinza-azulado), sem calor. Stops levemente mais largos
+     para compensar o blur menor do container. */
   background:
-    radial-gradient(ellipse at 18% 62%, rgba(174, 188, 202, 0.3), transparent 38%),
-    radial-gradient(ellipse at 78% 50%, rgba(136, 146, 162, 0.22), transparent 42%),
+    radial-gradient(ellipse at 18% 62%, rgba(174, 188, 202, 0.3), transparent 46%),
+    radial-gradient(ellipse at 78% 50%, rgba(136, 146, 162, 0.22), transparent 50%),
     linear-gradient(90deg, transparent, rgba(154, 168, 184, 0.2), transparent);
   animation: hero-fog-veil calc(26s * var(--fog-speed)) ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .hero-fog__veil--low {
@@ -2873,11 +2881,12 @@ a.linked-row:hover {
   border-radius: 999px;
   opacity: 0.6;
   background:
-    radial-gradient(ellipse at 25% 50%, rgba(176, 188, 200, 0.32), transparent 48%),
-    radial-gradient(ellipse at 72% 48%, rgba(96, 56, 64, 0.16), transparent 54%),
+    radial-gradient(ellipse at 25% 50%, rgba(176, 188, 200, 0.32), transparent 56%),
+    radial-gradient(ellipse at 72% 48%, rgba(96, 56, 64, 0.16), transparent 60%),
     linear-gradient(90deg, transparent, rgba(150, 162, 178, 0.28), transparent);
   transform: translate3d(0, 0, 0);
   animation: hero-fog-drift calc(34s * var(--fog-speed)) ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .hero-fog__bank--near {
@@ -2905,13 +2914,14 @@ a.linked-row:hover {
 .hero-horizon {
   z-index: 2;
   overflow: hidden;
+  will-change: transform;
 }
 
 .hero-horizon__base {
   position: absolute;
   inset: auto -6% -8% -6%;
   height: 40%;
-  filter: blur(28px);
+  filter: blur(18px);
   background:
     radial-gradient(ellipse 70% 120% at 50% 120%, rgba(2, 2, 5, 0.95), transparent 70%),
     linear-gradient(180deg, transparent, rgba(3, 4, 7, 0.92) 72%);
@@ -2921,7 +2931,7 @@ a.linked-row:hover {
   position: absolute;
   inset: auto -10% 18% -10%;
   height: 26%;
-  filter: blur(30px);
+  filter: blur(18px);
   opacity: 0.7;
   background:
     radial-gradient(ellipse 50% 100% at 30% 100%, rgba(60, 18, 30, 0.2), transparent 70%),
@@ -2932,8 +2942,11 @@ a.linked-row:hover {
 .hero-rays {
   z-index: 3;
   overflow: hidden;
-  opacity: 0.5;
-  mix-blend-mode: screen;
+  /* Sem mix-blend-mode: screen — ele forcava leitura/composicao do fundo. Sobre
+     o fundo escuro, alpha normal de uma luz translucida fica praticamente igual.
+     Opacidade um pouco maior compensa a troca de blend. */
+  opacity: 0.62;
+  will-change: transform;
 }
 
 .hero-rays__beam {
@@ -2941,13 +2954,13 @@ a.linked-row:hover {
   top: -40%;
   width: 46%;
   height: 180%;
-  filter: blur(34px);
+  filter: blur(18px);
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(158, 178, 214, 0.1),
-    rgba(186, 202, 230, 0.14),
-    rgba(158, 178, 214, 0.1),
+    rgba(158, 178, 214, 0.13),
+    rgba(186, 202, 230, 0.18),
+    rgba(158, 178, 214, 0.13),
     transparent
   );
 }
@@ -2982,7 +2995,7 @@ a.linked-row:hover {
   content: "";
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(5, 5, 8, 0.74), transparent 68%);
-  filter: blur(18px);
+  filter: blur(12px);
 }
 
 .hero-content__eyebrow {
@@ -3023,7 +3036,9 @@ a.linked-row:hover {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: hero-title-sheen 9s ease-in-out infinite;
+    /* Brilho varre o titulo na entrada (2x) e assenta na cor base — sem repaint
+       continuo do elemento LCP em regime permanente. */
+    animation: hero-title-sheen 6s ease-in-out 0.6s 2;
   }
 
   /* O brasao tem cor propria — nao herdar o clip transparente. */
@@ -3047,9 +3062,22 @@ a.linked-row:hover {
     linear-gradient(180deg, rgba(213, 164, 79, 0.22), rgba(142, 22, 36, 0.18)),
     rgba(7, 8, 11, 0.62);
   box-shadow:
-    inset 0 0 22px rgba(213, 164, 79, 0.14),
-    0 0 32px rgba(213, 164, 79, var(--gold-glow));
-  animation: hero-sigil-glow 4.8s ease-in-out infinite;
+    inset 0 0 22px rgba(213, 164, 79, 0.16),
+    0 0 26px rgba(213, 164, 79, var(--gold-glow));
+}
+
+/* Glow pulsante via opacidade/scale de um halo (composite) em vez de animar
+   box-shadow, que repintava a moldura a cada frame. */
+.hero-content__sigil::after {
+  position: absolute;
+  inset: -45%;
+  z-index: -1;
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(213, 164, 79, 0.4), transparent 70%);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: hero-sigil-pulse 4.8s ease-in-out infinite;
 }
 
 .hero-content__sigil svg {
@@ -3109,10 +3137,12 @@ a.linked-row:hover {
 
 .hero-cta--secondary {
   border-color: rgba(213, 164, 79, 0.26);
+  /* Sem backdrop-filter: ele ficava sobre o <canvas> animado e re-borrava o
+     fundo a cada frame (grande custo de INP). Fundo translucido mais fechado
+     mantem o ar de "vidro fosco" sem nenhuma reamostragem do fundo. */
   background:
-    linear-gradient(180deg, rgba(28, 26, 30, 0.62), rgba(10, 11, 15, 0.62)),
-    rgba(8, 9, 13, 0.5);
-  backdrop-filter: blur(8px);
+    linear-gradient(180deg, rgba(30, 28, 33, 0.86), rgba(11, 12, 16, 0.86)),
+    rgba(8, 9, 13, 0.72);
 }
 
 .hero-cta--secondary:hover,
@@ -3166,18 +3196,16 @@ a.linked-row:hover {
   }
 }
 
-@keyframes hero-sigil-glow {
+@keyframes hero-sigil-pulse {
   0%,
   100% {
-    box-shadow:
-      inset 0 0 22px rgba(213, 164, 79, 0.14),
-      0 0 28px rgba(213, 164, 79, 0.18);
+    opacity: 0.45;
+    transform: scale(0.92);
   }
 
   50% {
-    box-shadow:
-      inset 0 0 30px rgba(255, 211, 110, 0.2),
-      0 0 46px rgba(213, 164, 79, 0.34);
+    opacity: 0.9;
+    transform: scale(1.08);
   }
 }
 
@@ -3215,7 +3243,7 @@ a.linked-row:hover {
   }
 
   .hero-fog {
-    filter: blur(16px);
+    filter: blur(7px);
   }
 }
 
@@ -3224,7 +3252,8 @@ a.linked-row:hover {
   .hero-fog__bank,
   .hero-rays__beam,
   .hero-content__title,
-  .hero-content__sigil {
+  .hero-content__sigil,
+  .hero-content__sigil::after {
     animation: none;
   }
 

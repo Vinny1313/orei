@@ -3,13 +3,13 @@ import { useReducedMotion } from 'framer-motion'
 
 // ───────────────── Knobs da tempestade (canvas) ─────────────────
 // Ajuste fino de chuva, vento, cinzas e relampagos num lugar so.
-const RAIN_COUNT = 360 // densidade da chuva (desktop)
-const RAIN_COUNT_MOBILE = 130 // densidade no mobile
+const RAIN_COUNT = 220 // densidade da chuva (desktop)
+const RAIN_COUNT_MOBILE = 90 // densidade no mobile
 const RAIN_SPEED = 1 // multiplicador de velocidade da chuva
 const RAIN_ANGLE = 0.26 // inclinacao base em rad (~15deg)
 const WIND = 0.16 // amplitude da oscilacao de vento (rad)
 const GUST_CHANCE = 0.5 // prob. de rajada a cada janela de vento
-const ASH_COUNT = 28 // motas de cinza/poeira (desktop)
+const ASH_COUNT = 20 // motas de cinza/poeira (desktop)
 const LIGHTNING_MIN_MS = 8000 // intervalo minimo entre relampagos
 const LIGHTNING_MAX_MS = 16000 // intervalo maximo entre relampagos
 const LIGHTNING_FLASH = 0.24 // intensidade maxima do clarao (0–1)
@@ -67,7 +67,7 @@ export function StormCanvas() {
     })
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       w = canvas.clientWidth
       h = canvas.clientHeight
       canvas.width = Math.round(w * dpr)
@@ -82,6 +82,9 @@ export function StormCanvas() {
     let tgtMy = 0
     let curMx = 0
     let curMy = 0
+    let lastMx = Number.NaN // ultimo valor escrito como CSS var
+    let lastMy = Number.NaN
+    const PARALLAX_EPS = 0.002 // so reescreve a var se mudou alem disso
     const onPointer = (e: PointerEvent) => {
       tgtMx = (e.clientX / window.innerWidth - 0.5) * 2
       tgtMy = (e.clientY / window.innerHeight - 0.5) * 2
@@ -153,12 +156,17 @@ export function StormCanvas() {
       last = now
       ctx.clearRect(0, 0, w, h)
 
-      // Parallax suave
+      // Parallax suave — so escreve as CSS vars quando mudam de verdade, para
+      // nao forcar style-recalc nas 4 camadas a cada frame com o mouse parado.
       if (parent) {
         curMx += (tgtMx - curMx) * 0.05 * dt
         curMy += (tgtMy - curMy) * 0.05 * dt
-        parent.style.setProperty('--mx', curMx.toFixed(3))
-        parent.style.setProperty('--my', curMy.toFixed(3))
+        if (Math.abs(curMx - lastMx) > PARALLAX_EPS || Math.abs(curMy - lastMy) > PARALLAX_EPS) {
+          lastMx = curMx
+          lastMy = curMy
+          parent.style.setProperty('--mx', curMx.toFixed(3))
+          parent.style.setProperty('--my', curMy.toFixed(3))
+        }
       }
 
       // Vento: oscilacao continua + rajadas
@@ -212,7 +220,7 @@ export function StormCanvas() {
         ctx.strokeStyle = `rgba(224, 236, 255, ${0.6 * bolt.life})`
         ctx.lineCap = 'round'
         ctx.shadowColor = 'rgba(190, 210, 255, 0.9)'
-        ctx.shadowBlur = 20
+        ctx.shadowBlur = 12
         for (const path of bolt.paths) {
           ctx.lineWidth = path === bolt.paths[0] ? 2.2 : 1.2
           ctx.beginPath()
@@ -241,14 +249,28 @@ export function StormCanvas() {
       raf = requestAnimationFrame(frame)
     }
 
+    // Pausa o loop quando a aba fica oculta (libera main-thread/compositor) e
+    // reseta o relogio ao voltar, evitando salto de dt.
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf)
+        raf = 0
+      } else if (!raf) {
+        last = performance.now()
+        raf = requestAnimationFrame(frame)
+      }
+    }
+
     resize()
     window.addEventListener('resize', resize)
+    document.addEventListener('visibilitychange', onVisibility)
     raf = requestAnimationFrame(frame)
 
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', onPointer)
+      document.removeEventListener('visibilitychange', onVisibility)
       timers.forEach(clearTimeout)
       parent?.style.removeProperty('--mx')
       parent?.style.removeProperty('--my')

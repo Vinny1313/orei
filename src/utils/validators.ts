@@ -14,7 +14,7 @@ const signInPassword = z.string().min(1, 'Informe sua senha.')
 
 const newPassword = z
   .string()
-  .min(12, 'A senha deve ter ao menos 12 caracteres.')
+  .min(6, 'A senha deve ter ao menos 6 caracteres.')
   .regex(/[A-Za-z]/, 'A senha deve conter ao menos uma letra.')
   .regex(/[0-9]/, 'A senha deve conter ao menos um nÃºmero.')
 

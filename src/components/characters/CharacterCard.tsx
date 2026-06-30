@@ -3,6 +3,7 @@
 import { Brain, HeartPulse, Pencil, ScrollText, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Character } from '../../types/character'
+import { Avatar } from '../ui/Avatar'
 
 type CharacterCardProps = {
   character: Character
@@ -16,7 +17,10 @@ export function CharacterCard({ character, onDelete }: CharacterCardProps) {
   return (
     <article className="character-card panel">
       <header className="character-card__head">
-        <h3>{name}</h3>
+        <div className="character-card__identity">
+          <Avatar name={name} size={40} />
+          <h3>{name}</h3>
+        </div>
         <span className="character-card__class">{sheet.identity.className}</span>
       </header>
 

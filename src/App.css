@@ -25,9 +25,10 @@
 .eyebrow {
   margin: 0 0 4px;
   color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
@@ -35,7 +36,8 @@ h1,
 h2 {
   margin: 0;
   color: var(--text-strong);
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
 }
 
 h1 {
@@ -101,19 +103,11 @@ h2 {
   color: var(--text-strong);
   background: var(--surface-2);
   cursor: pointer;
-  transition:
-    border-color 160ms ease,
-    background 160ms ease,
-    transform 160ms ease;
 }
 
 button:hover {
   border-color: var(--gold);
   background: var(--surface-3);
-}
-
-button:active {
-  transform: translateY(1px);
 }
 
 button:focus-visible,
@@ -607,6 +601,19 @@ select {
   background: linear-gradient(180deg, rgba(213, 164, 79, 0.22), rgba(142, 22, 36, 0.12));
 }
 
+/* Wrapper de somente-leitura: neutraliza o estilo nativo do fieldset para o
+   layout não mudar (apenas desabilita os controles internos quando disabled). */
+.sheet-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sheet-fieldset:disabled {
+  opacity: 1;
+}
+
 .sheet-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
@@ -1045,7 +1052,6 @@ select {
 
 .attribute-picker-trigger svg {
   color: var(--gold);
-  transition: transform 160ms ease;
 }
 
 .attribute-modal-backdrop {
@@ -1057,7 +1063,6 @@ select {
   padding: 18px;
   background: rgba(7, 8, 11, 0.58);
   backdrop-filter: blur(7px);
-  animation: modal-fade-in 140ms ease-out;
 }
 
 .attribute-modal {
@@ -1069,7 +1074,6 @@ select {
     linear-gradient(145deg, rgba(255, 245, 223, 0.035), rgba(213, 164, 79, 0.025)),
     rgba(16, 18, 22, 0.98);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-  animation: modal-pop-in 160ms ease-out;
 }
 
 .attribute-modal header {
@@ -1145,19 +1149,6 @@ select {
 .attribute-modal-grid button.active span {
   color: #160c07;
   background: rgba(255, 245, 223, 0.34);
-}
-
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes modal-pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
 }
 
 .abilities-tab,
@@ -1287,7 +1278,6 @@ select {
   border-radius: 8px;
   background: rgba(16, 18, 22, 0.96);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.36);
-  animation: roll-toast-in 220ms ease-out;
 }
 
 .roll-toast button {
@@ -1313,18 +1303,6 @@ select {
   color: var(--text);
 }
 
-@keyframes roll-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .roll-history-drawer {
   position: fixed;
   top: 0;
@@ -1340,7 +1318,6 @@ select {
   background: rgba(16, 18, 22, 0.98);
   box-shadow: -20px 0 60px rgba(0, 0, 0, 0.35);
   transform: translateX(105%);
-  transition: transform 180ms ease;
 }
 
 .roll-history-drawer.open {
@@ -1441,8 +1418,10 @@ select {
   align-items: center;
   gap: 9px;
   color: var(--text-strong);
-  font-weight: 900;
-  font-size: 1.1rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.12rem;
+  letter-spacing: 0.04em;
   text-decoration: none;
 }
 
@@ -1467,10 +1446,6 @@ select {
   color: var(--muted);
   font-weight: 700;
   text-decoration: none;
-  transition:
-    color 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease;
 }
 
 .nav-link:hover {
@@ -1576,7 +1551,9 @@ select {
 .character-card__head h3 {
   margin: 0;
   color: var(--text-strong);
-  font-size: 1.15rem;
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  letter-spacing: 0.01em;
 }
 
 .character-card__class {
@@ -1724,6 +1701,41 @@ select {
   padding: 28px;
 }
 
+/* Atmosfera imersiva compartilhada por landing e telas de auth.
+   Camadas só em CSS (sem imagens): brilho de tocha dourado no topo,
+   brasas vinho nos cantos, vinheta e textura sutil de pergaminho. */
+.landing,
+.auth-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.landing::before,
+.auth-shell::before {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 72% 48% at 50% -8%, rgba(213, 164, 79, 0.18), transparent 60%),
+    radial-gradient(circle at 10% 6%, rgba(142, 22, 36, 0.3), transparent 42%),
+    radial-gradient(circle at 90% 94%, rgba(142, 22, 36, 0.2), transparent 46%);
+}
+
+.landing::after,
+.auth-shell::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 52%, rgba(7, 8, 11, 0.55) 100%),
+    repeating-linear-gradient(118deg, rgba(255, 245, 223, 0.016) 0 2px, transparent 2px 6px);
+}
+
 .landing__inner {
   width: min(640px, 100%);
   text-align: center;
@@ -1806,16 +1818,6 @@ select {
 
 .full-page-loader svg {
   color: var(--gold);
-}
-
-.spin {
-  animation: orei-spin 900ms linear infinite;
-}
-
-@keyframes orei-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Formulário de auth (login/cadastro) — labels alinhados à esquerda */
@@ -2360,5 +2362,880 @@ select {
 
 .link-character .select-wrap {
   flex: 1 1 220px;
+}
+
+/* ============================================================
+   ETAPA 2 — Primitivos de UI reutilizáveis (Badge, Skeleton).
+   Reusam os tokens da Etapa 1 (--radius-*, --gold-soft, cores de estado).
+   ============================================================ */
+
+/* Badge / chip (status, classe, tags) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  background: var(--surface-2);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge--gold {
+  color: var(--gold);
+  border-color: rgba(213, 164, 79, 0.5);
+  background: var(--gold-soft);
+}
+
+.badge--success {
+  color: var(--success);
+  border-color: rgba(143, 214, 160, 0.4);
+  background: rgba(143, 214, 160, 0.08);
+}
+
+.badge--warning {
+  color: var(--warning);
+  border-color: rgba(232, 183, 101, 0.4);
+  background: rgba(232, 183, 101, 0.08);
+}
+
+.badge--danger {
+  color: #d89aa2;
+  border-color: rgba(142, 22, 36, 0.5);
+  background: rgba(142, 22, 36, 0.12);
+}
+
+/* Skeleton de carregamento (shimmer) */
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 184px;
+}
+
+/* ============================================================
+   ETAPA 4 — Avatar, navbar com menu mobile, login Google-protagonista.
+   ============================================================ */
+
+/* Avatar: imagem (avatarUrl do Google) ou iniciais como fallback */
+.avatar {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(213, 164, 79, 0.4);
+  border-radius: var(--radius-pill);
+  color: var(--gold);
+  background: var(--surface-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.avatar--fallback {
+  background:
+    linear-gradient(160deg, rgba(213, 164, 79, 0.2), rgba(142, 22, 36, 0.16)),
+    var(--surface-2);
+}
+
+/* Navbar: hambúrguer + área colapsável no mobile */
+.navbar-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.navbar-collapse {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.navbar-collapse .nav-links {
+  margin-left: 0;
+}
+
+.navbar-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+a.navbar-user {
+  text-decoration: none;
+}
+
+a.navbar-user:hover {
+  color: var(--gold);
+}
+
+/* Bloco de e-mail/senha recolhível do login/cadastro */
+.auth-email-fields {
+  display: grid;
+  gap: 14px;
+}
+
+@media (max-width: 760px) {
+  .navbar-toggle {
+    display: inline-flex;
+  }
+
+  .navbar-collapse {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    margin-top: 6px;
+    margin-left: 0;
+  }
+
+  .navbar-collapse.open {
+    display: flex;
+  }
+
+  .navbar-collapse .nav-links {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .navbar-account {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  a.navbar-user {
+    max-width: none;
+    justify-content: flex-start;
+  }
+}
+
+/* Cards de resumo (StatCard) — usados no perfil e no dashboard */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stat-card__icon {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.stat-card__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-card__value {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.stat-card__label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.stat-card__hint {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+/* Página de perfil */
+.profile-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.profile-hero__info {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-hero__name {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.profile-hero__meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-hero__actions {
+  margin-left: auto;
+}
+
+a.linked-row {
+  text-decoration: none;
+}
+
+a.linked-row:hover {
+  border-color: var(--gold);
+}
+
+@media (max-width: 760px) {
+  .profile-hero__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Identidade no card de agente (avatar + nome) */
+.character-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.character-card__identity h3 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Faixa de resumo do dashboard (StatCards), com respiro abaixo */
+.dashboard-summary {
+  margin-bottom: 18px;
+}
+
+/* Modal de confirmação genérico (ConfirmDialog), substitui window.confirm */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(7, 8, 11, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.dialog {
+  width: min(440px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgba(213, 164, 79, 0.34);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(145deg, rgba(255, 245, 223, 0.035), rgba(213, 164, 79, 0.025)),
+    rgba(16, 18, 22, 0.98);
+  box-shadow: var(--shadow-lg);
+}
+
+.dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dialog__icon {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.dialog__icon.is-danger {
+  color: #ffb4a8;
+  background: rgba(142, 22, 36, 0.2);
+}
+
+.dialog__title {
+  font-size: 1.15rem;
+}
+
+.dialog__desc {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Botão sólido de ação destrutiva (confirmar exclusão) */
+.danger-button {
+  color: var(--text-strong);
+  border-color: rgba(142, 22, 36, 0.8);
+  background: linear-gradient(180deg, #b3243a, #7c121f);
+}
+
+/* ============================================================
+   Landing cinematografica - tempestade dark fantasy.
+   Camadas decorativas sem pointer-events para preservar os CTAs.
+   ============================================================ */
+.landing {
+  /* ── Knobs de ajuste fino da atmosfera (mude apenas estes valores) ──
+     a) nevoa: intensidade   b) nevoa: velocidade
+     c) chuva: intensidade   chuva: velocidade
+     d) relampago: frequencia  e) vinheta: intensidade
+     g) brilho dourado (botoes + titulo)                                */
+  --fog-intensity: 0.85;
+  --fog-speed: 1;
+  --vignette-intensity: 0.94;
+  --gold-glow: 0.28;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(24px, 5vw, 72px);
+  /* Base: preto/grafite dominante, frieza ao topo, brasa de vinho apenas
+     como profundidade num canto — vermelho nunca como parede solida. */
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 12%, rgba(96, 112, 140, 0.12), transparent 60%),
+    radial-gradient(circle at 22% 82%, rgba(74, 12, 24, 0.16), transparent 42%),
+    linear-gradient(177deg, #05060a 0%, #07080d 38%, #0c0710 70%, #040408 100%);
+}
+
+.landing::before,
+.landing::after {
+  content: none;
+}
+
+.hero-background,
+.hero-gradient,
+.hero-noise,
+.hero-vignette,
+.hero-fog,
+.hero-horizon,
+.hero-rays,
+.hero-storm-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Parallax (--mx/--my sao escritos pelo StormCanvas conforme o mouse). */
+.hero-background {
+  --mx: 0;
+  --my: 0;
+}
+
+.hero-gradient {
+  transform: translate3d(calc(var(--mx) * -7px), calc(var(--my) * -7px), 0) scale(1.06);
+}
+
+.hero-rays {
+  transform: translate3d(calc(var(--mx) * -18px), calc(var(--my) * -6px), 0);
+}
+
+.hero-fog {
+  transform: translate3d(calc(var(--mx) * 16px), calc(var(--my) * 12px), 0);
+}
+
+.hero-horizon {
+  transform: translate3d(calc(var(--mx) * 9px), 0, 0);
+}
+
+/* Chuva + cinzas + relampagos rodam aqui (ver StormCanvas.tsx). */
+.hero-storm-canvas {
+  z-index: 6;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-background {
+  z-index: -1;
+  overflow: hidden;
+}
+
+.hero-gradient {
+  /* Profundidade: nucleo de luz fria suave + brasa de vinho difusa no
+     canto inferior + sombras frias. Grafite/preto dominam a tela. */
+  background:
+    radial-gradient(ellipse 64% 52% at 50% 36%, rgba(26, 34, 50, 0.62), transparent 60%),
+    radial-gradient(circle at 16% 80%, rgba(70, 12, 26, 0.24), transparent 40%),
+    radial-gradient(circle at 84% 10%, rgba(74, 88, 116, 0.16), transparent 34%),
+    radial-gradient(circle at 88% 86%, rgba(10, 12, 18, 0.8), transparent 46%),
+    linear-gradient(160deg, #04050a 0%, #070810 36%, #0e0712 70%, #040409 100%);
+}
+
+.hero-noise {
+  opacity: 0.16;
+  mix-blend-mode: soft-light;
+  /* Grao fino e direcional — sem pontos brilhantes (nada de "estrelas"). */
+  background-image:
+    repeating-linear-gradient(112deg, rgba(255, 245, 223, 0.02) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(28deg, rgba(120, 134, 158, 0.015) 0 1px, transparent 1px 6px);
+  background-size:
+    6px 6px,
+    9px 9px;
+}
+
+.hero-vignette {
+  z-index: 8;
+  opacity: var(--vignette-intensity);
+  /* Vinheta cinematografica mais fechada nas bordas, centro limpo. */
+  background:
+    radial-gradient(ellipse 78% 74% at 50% 44%, transparent 0 34%, rgba(0, 0, 0, 0.42) 62%, rgba(0, 0, 0, 0.96) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.86), transparent 26%, transparent 74%, rgba(0, 0, 0, 0.86)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.74), transparent 30%, rgba(0, 0, 0, 0.84));
+}
+
+.hero-fog {
+  z-index: 4;
+  overflow: hidden;
+  filter: blur(22px);
+  opacity: var(--fog-intensity);
+}
+
+.hero-fog__veil {
+  position: absolute;
+  inset: -12% -18%;
+  opacity: 0.52;
+  /* Tom frio e sombrio (cinza-azulado), sem calor. */
+  background:
+    radial-gradient(ellipse at 18% 62%, rgba(174, 188, 202, 0.3), transparent 38%),
+    radial-gradient(ellipse at 78% 50%, rgba(136, 146, 162, 0.22), transparent 42%),
+    linear-gradient(90deg, transparent, rgba(154, 168, 184, 0.2), transparent);
+  animation: hero-fog-veil calc(26s * var(--fog-speed)) ease-in-out infinite alternate;
+}
+
+.hero-fog__veil--low {
+  inset: 20% -20% -18%;
+  opacity: 0.3;
+  background:
+    radial-gradient(ellipse at 34% 78%, rgba(178, 190, 202, 0.28), transparent 44%),
+    radial-gradient(ellipse at 68% 64%, rgba(96, 104, 120, 0.2), transparent 46%),
+    linear-gradient(90deg, transparent, rgba(160, 172, 188, 0.18), transparent);
+  animation-duration: calc(36s * var(--fog-speed));
+  animation-direction: alternate-reverse;
+}
+
+.hero-fog__bank {
+  position: absolute;
+  left: -18%;
+  width: 136%;
+  border-radius: 999px;
+  opacity: 0.6;
+  background:
+    radial-gradient(ellipse at 25% 50%, rgba(176, 188, 200, 0.32), transparent 48%),
+    radial-gradient(ellipse at 72% 48%, rgba(96, 56, 64, 0.16), transparent 54%),
+    linear-gradient(90deg, transparent, rgba(150, 162, 178, 0.28), transparent);
+  transform: translate3d(0, 0, 0);
+  animation: hero-fog-drift calc(34s * var(--fog-speed)) ease-in-out infinite alternate;
+}
+
+.hero-fog__bank--near {
+  bottom: -6%;
+  height: 52%;
+  opacity: 0.72;
+}
+
+.hero-fog__bank--mid {
+  top: 32%;
+  height: 36%;
+  opacity: 0.46;
+  animation-duration: calc(44s * var(--fog-speed));
+  animation-direction: alternate-reverse;
+}
+
+.hero-fog__bank--far {
+  top: 6%;
+  height: 26%;
+  opacity: 0.3;
+  animation-duration: calc(56s * var(--fog-speed));
+}
+
+/* Horizonte difuso: profundidade no rodape, sem forma reconhecivel. */
+.hero-horizon {
+  z-index: 2;
+  overflow: hidden;
+}
+
+.hero-horizon__base {
+  position: absolute;
+  inset: auto -6% -8% -6%;
+  height: 40%;
+  filter: blur(28px);
+  background:
+    radial-gradient(ellipse 70% 120% at 50% 120%, rgba(2, 2, 5, 0.95), transparent 70%),
+    linear-gradient(180deg, transparent, rgba(3, 4, 7, 0.92) 72%);
+}
+
+.hero-horizon__haze {
+  position: absolute;
+  inset: auto -10% 18% -10%;
+  height: 26%;
+  filter: blur(30px);
+  opacity: 0.7;
+  background:
+    radial-gradient(ellipse 50% 100% at 30% 100%, rgba(60, 18, 30, 0.2), transparent 70%),
+    radial-gradient(ellipse 56% 100% at 72% 100%, rgba(40, 50, 68, 0.18), transparent 72%);
+}
+
+/* Feixes de luar: luz fria difusa atravessando a cena, bem sutil. */
+.hero-rays {
+  z-index: 3;
+  overflow: hidden;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+}
+
+.hero-rays__beam {
+  position: absolute;
+  top: -40%;
+  width: 46%;
+  height: 180%;
+  filter: blur(34px);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(158, 178, 214, 0.1),
+    rgba(186, 202, 230, 0.14),
+    rgba(158, 178, 214, 0.1),
+    transparent
+  );
+}
+
+.hero-rays__beam--a {
+  left: 6%;
+  transform: rotate(14deg);
+  animation: hero-rays-sway 26s ease-in-out infinite alternate;
+}
+
+.hero-rays__beam--b {
+  right: 2%;
+  width: 38%;
+  opacity: 0.7;
+  transform: rotate(18deg);
+  animation: hero-rays-sway 34s ease-in-out infinite alternate-reverse;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  width: min(780px, 100%);
+  padding: clamp(8px, 2vw, 18px);
+  text-align: center;
+}
+
+.hero-content::before {
+  position: absolute;
+  inset: 8% 4% auto;
+  z-index: -1;
+  height: 58%;
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(5, 5, 8, 0.74), transparent 68%);
+  filter: blur(18px);
+}
+
+.hero-content__eyebrow {
+  margin-bottom: 14px;
+  color: rgba(213, 164, 79, 0.84);
+  text-shadow: 0 0 18px rgba(213, 164, 79, 0.24);
+}
+
+.hero-content__title {
+  justify-content: center;
+  gap: clamp(12px, 2.3vw, 20px);
+  margin-bottom: 20px;
+  color: #fff7e6;
+  font-size: clamp(3rem, 10vw, 7.5rem);
+  line-height: 0.88;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.42),
+    0 0 38px rgba(213, 164, 79, var(--gold-glow)),
+    0 24px 72px rgba(0, 0, 0, 0.78);
+}
+
+/* Sheen metalico: brilho claro varrendo o titulo, preservando leitura.
+   Guardado por @supports p/ nao apagar o texto onde clip nao existir. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero-content__title {
+    background-image: linear-gradient(
+      100deg,
+      #fff7e6 0%,
+      #fff7e6 38%,
+      #fffaf0 47%,
+      #ffe7b8 50%,
+      #fffaf0 53%,
+      #fff7e6 62%,
+      #fff7e6 100%
+    );
+    background-size: 240% 100%;
+    background-position: 130% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: hero-title-sheen 9s ease-in-out infinite;
+  }
+
+  /* O brasao tem cor propria — nao herdar o clip transparente. */
+  .hero-content__sigil {
+    -webkit-text-fill-color: initial;
+  }
+}
+
+.hero-content__sigil {
+  position: relative;
+  display: inline-grid;
+  flex-shrink: 0;
+  width: clamp(54px, 8vw, 88px);
+  height: clamp(54px, 8vw, 88px);
+  place-items: center;
+  border: 1px solid rgba(213, 164, 79, 0.42);
+  border-radius: 50%;
+  color: var(--gold-strong);
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 245, 223, 0.22), transparent 28%),
+    linear-gradient(180deg, rgba(213, 164, 79, 0.22), rgba(142, 22, 36, 0.18)),
+    rgba(7, 8, 11, 0.62);
+  box-shadow:
+    inset 0 0 22px rgba(213, 164, 79, 0.14),
+    0 0 32px rgba(213, 164, 79, var(--gold-glow));
+  animation: hero-sigil-glow 4.8s ease-in-out infinite;
+}
+
+.hero-content__sigil svg {
+  width: 54%;
+  height: 54%;
+}
+
+.hero-content__lead {
+  max-width: 39rem;
+  margin-bottom: 32px;
+  color: rgba(231, 221, 200, 0.88);
+  font-size: clamp(1.02rem, 2vw, 1.24rem);
+  text-shadow: 0 12px 34px rgba(0, 0, 0, 0.72);
+}
+
+.hero-content__actions {
+  align-items: center;
+}
+
+.hero-cta {
+  position: relative;
+  overflow: hidden;
+  min-width: 174px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.hero-cta::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: 0;
+  background: linear-gradient(115deg, transparent 12%, rgba(255, 245, 223, 0.32) 48%, transparent 82%);
+  transform: translateX(-120%);
+  transition:
+    opacity 180ms ease,
+    transform 420ms ease;
+}
+
+.hero-cta:hover,
+.hero-cta:focus-visible {
+  box-shadow:
+    0 0 0 1px rgba(255, 211, 110, calc(var(--gold-glow) + 0.12)),
+    0 0 34px rgba(213, 164, 79, calc(var(--gold-glow) + 0.04)),
+    0 22px 52px rgba(0, 0, 0, 0.42);
+}
+
+.hero-cta:hover::before,
+.hero-cta:focus-visible::before {
+  opacity: 1;
+  transform: translateX(120%);
+}
+
+.hero-cta--secondary {
+  border-color: rgba(213, 164, 79, 0.26);
+  background:
+    linear-gradient(180deg, rgba(28, 26, 30, 0.62), rgba(10, 11, 15, 0.62)),
+    rgba(8, 9, 13, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.hero-cta--secondary:hover,
+.hero-cta--secondary:focus-visible {
+  border-color: rgba(213, 164, 79, 0.5);
+}
+
+@keyframes hero-fog-drift {
+  from {
+    transform: translate3d(-7%, 1%, 0) scale(1.03);
+  }
+
+  to {
+    transform: translate3d(8%, -5%, 0) scale(1.13);
+  }
+}
+
+@keyframes hero-fog-veil {
+  from {
+    transform: translate3d(-5%, 0, 0) scale(1);
+    opacity: 0.2;
+  }
+
+  to {
+    transform: translate3d(6%, -2%, 0) scale(1.08);
+    opacity: 0.34;
+  }
+}
+
+@keyframes hero-rays-sway {
+  from {
+    opacity: 0.42;
+    transform: translate3d(-3%, 0, 0) rotate(13deg);
+  }
+
+  to {
+    opacity: 0.62;
+    transform: translate3d(4%, 0, 0) rotate(17deg);
+  }
+}
+
+@keyframes hero-title-sheen {
+  0%,
+  62%,
+  100% {
+    background-position: 130% 0;
+  }
+
+  31% {
+    background-position: -30% 0;
+  }
+}
+
+@keyframes hero-sigil-glow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 22px rgba(213, 164, 79, 0.14),
+      0 0 28px rgba(213, 164, 79, 0.18);
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 30px rgba(255, 211, 110, 0.2),
+      0 0 46px rgba(213, 164, 79, 0.34);
+  }
+}
+
+@media (max-width: 760px) {
+  .landing {
+    align-items: end;
+    padding: 24px 18px 56px;
+  }
+
+  .hero-content {
+    width: min(520px, 100%);
+  }
+
+  .hero-content__title {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .hero-content__lead {
+    margin-bottom: 24px;
+  }
+
+  .hero-content__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .hero-cta {
+    width: 100%;
+  }
+
+  .landing {
+    /* Mobile: nevoa mais leve (a chuva ja reduz via StormCanvas). */
+    --fog-intensity: 0.6;
+  }
+
+  .hero-fog {
+    filter: blur(16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fog__veil,
+  .hero-fog__bank,
+  .hero-rays__beam,
+  .hero-content__title,
+  .hero-content__sigil {
+    animation: none;
+  }
+
+  .hero-cta,
+  .hero-cta::before {
+    transition: none;
+  }
+
+  /* StormCanvas ja nao anima com reduced-motion (so renderiza vazio). */
+  .hero-storm-canvas {
+    display: none;
+  }
 }
 

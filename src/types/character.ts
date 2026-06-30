@@ -109,6 +109,8 @@ export type RollResult = {
 export type Character = {
   id: string
   routeKey: string
+  /** Dono da ficha (owner_id). Usado para impedir edição de ficha alheia. */
+  ownerId?: string
   createdAt: string
   updatedAt: string
   sheet: CharacterSheet

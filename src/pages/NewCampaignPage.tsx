@@ -24,7 +24,7 @@ function NewCampaignPageContent() {
 
   const handleSubmit = async () => {
     if (!values.name.trim()) {
-      setError('O nome da campanha e obrigatorio.')
+      setError('O nome da campanha é obrigatório.')
       return
     }
     setSubmitting(true)
@@ -36,7 +36,7 @@ function NewCampaignPageContent() {
       })
       navigate(`/campanhas/${campaign.routeKey}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nao foi possivel criar a campanha.')
+      setError(err instanceof Error ? err.message : 'Não foi possível criar a campanha.')
       setSubmitting(false)
     }
   }
@@ -47,7 +47,7 @@ function NewCampaignPageContent() {
         <div>
           <Link to="/campanhas" className="back-link">
             <ArrowLeft size={16} aria-hidden />
-            Voltar as campanhas
+            Voltar às campanhas
           </Link>
           <h1>Nova campanha</h1>
         </div>

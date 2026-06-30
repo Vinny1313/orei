@@ -3,10 +3,14 @@
 import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { CharacterSheet } from '../components/characters/CharacterSheet'
+import { useAuth } from '../hooks/useAuth'
 import { useCharacter } from '../hooks/useCharacters'
+
+const noopSave = () => Promise.resolve()
 
 export function CharacterSheetPage() {
   const { routeKey } = useParams<{ routeKey: string }>()
+  const { user } = useAuth()
   const { character, loading, error, save } = useCharacter(routeKey)
 
   if (loading) {
@@ -28,6 +32,22 @@ export function CharacterSheetPage() {
           </Link>
         </div>
       </main>
+    )
+  }
+
+  // Defesa: se a ficha não é do usuário (acesso por URL direta a uma ficha alheia
+  // que a RLS liberou para leitura), nunca abrir em edição — renderiza somente-leitura.
+  const isOwner = character.ownerId === undefined || character.ownerId === user?.id
+
+  if (!isOwner) {
+    return (
+      <CharacterSheet
+        key={character.id}
+        initialSheet={character.sheet}
+        onSave={noopSave}
+        readOnly
+        title={character.sheet.identity.characterName?.trim() || 'Ficha'}
+      />
     )
   }
 
